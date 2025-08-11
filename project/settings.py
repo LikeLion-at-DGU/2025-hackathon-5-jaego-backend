@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     
     'main',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
 
     'accounts',
@@ -56,6 +57,15 @@ INSTALLED_APPS = [
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+SIMPLE_JWT = {
+    'BLACKLIST_AFTER_ROTATION': True,
+}
 
 
 MIDDLEWARE = [
@@ -155,3 +165,6 @@ CORS_ALLOW_ORIGINS = [
     'http://프론트엔드주소',
     'https://프론트엔드주소',
 ]
+
+#######################################################
+
