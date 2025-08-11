@@ -57,7 +57,7 @@ class StoreStep1Serializer(serializers.ModelSerializer):
             address=address,
             latitude=validated_data["latitude"],
             longitude=validated_data["longitude"],
-            # 기본값: is_open=False, category=None, description=""
+            # 기본값: is_open=False,description=""
         )
         return store
 

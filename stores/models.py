@@ -6,7 +6,6 @@ from accounts.models import User
 class Store(models.Model):
     seller = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'seller'})
     store_name = models.CharField(max_length=100)
-    category = models.ForeignKey('categories.Category', on_delete=models.SET_NULL, null=True)
     opening_time = models.CharField(max_length=50)
     is_open = models.BooleanField(default=False)
     description = models.TextField(blank=True)
