@@ -1,44 +1,65 @@
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 
+################################################################
+# ( 1 ) User + role -> 소비자 / 판매자 ( 이메일 중복 불허 )
+class UserManager(BaseUserManager):
+    def create_user(self, email, password=None, role=None, **extra_fields):
+        if not email:
+            raise ValueError("이메일은 필수입니다.")
+        if role not in ('consumer', 'seller'):
+            raise ValueError("role은 'consumer' 또는 'seller' 중 하나여야 합니다.")
+        email = self.normalize_email(email)
+        user = self.model(email=email, role=role, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('role', 'seller')
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        if extra_fields.get('role') != 'seller':
+            raise ValueError("슈퍼유저는 반드시 판매자(seller)여야 합니다.")
+        return self.create_user(email, password, **extra_fields)
+
+# User 모델
 class User(AbstractBaseUser, PermissionsMixin):
+    ROLE_CHOICES = (
+        ('consumer', '소비자'),
+        ('seller', '판매자'),
+    )
     email = models.EmailField(unique=True)
-    password = models.CharField(max_length=128)
-    nickname = models.CharField(max_length=50, blank=True, null=True)  # 소비자 전용
-    phone = models.CharField(max_length=20)
-    is_seller = models.BooleanField(default=False)
+    name = models.CharField(max_length=50)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)  # admin site 접속 권한용
     created_at = models.DateTimeField(auto_now_add=True)
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ['role', 'name']
+
+    objects = UserManager()
 
     def __str__(self):
-        return self.email
+        return f"{self.email} ({self.role})"
 
-
-class UserRecommendedKeyword(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recommended_keywords')
+################################################################
+# ( 3 ) 추천 키워드 ( consumer 전용 )
+class RecommendedKeyword(models.Model):
+    consumer = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        limit_choices_to={'role' : 'consumer'},
+        related_name='recommended_keywords'
+    )
     keyword = models.CharField(max_length=100)
     score = models.FloatField()
     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"{self.keyword} ({self.score})"
-
-
-class Seller(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='seller_profile')
-    category = models.ForeignKey('categories.Category', on_delete=models.SET_NULL, null=True)
-    name = models.CharField(max_length=100)
-    opening_time = models.CharField(max_length=50)
-    is_open = models.BooleanField(default=True)
-    description = models.TextField(blank=True)
-    address = models.CharField(max_length=255)
-    latitude = models.DecimalField(max_digits=9, decimal_places=6)
-    longitude = models.DecimalField(max_digits=9, decimal_places=6)
-    business_license = models.FileField(upload_to='licenses/')
-    permit_doc = models.FileField(upload_to='permits/')
-    bank_copy = models.FileField(upload_to='bank_copies/')
+    class Meta:
+        unique_together = ('consumer', 'keyword')  # 같은 키워드 중복 방지
 
     def __str__(self):
-        return self.name
+        return f"{self.consumer.name} - {self.keyword} ({self.score})"

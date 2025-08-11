@@ -7,7 +7,7 @@ class Reservation(models.Model):
         ('picked_up', 'Picked Up'),
         ('cancelled', 'Cancelled'),
     ]
-    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='reservations')
+    consumer = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='reservations')
     product = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='reservations')
     quantity = models.PositiveIntegerField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
