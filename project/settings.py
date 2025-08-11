@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'categories',
     'products',
     'reservations',
+    'stores'
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
