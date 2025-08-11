@@ -3,6 +3,8 @@ from django.urls import path, include
 from .views import *
 
 router = DefaultRouter()
+router.register(r'', CategoryViewset, basename = 'category')
+
 urlpatterns = [
-    path('categories/', include(router.urls)),
+    path('', include(router.urls)),
 ]
