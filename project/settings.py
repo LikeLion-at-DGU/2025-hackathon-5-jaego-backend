@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    'main',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
@@ -163,8 +162,8 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_ORIGINS = [
-    'http://프론트엔드주소',
-    'https://프론트엔드주소',
+    'http://2025-hackathon-5-jaego-frontend-q7fyhs576-jyeon03s-projects.vercel.app/',
+    'https://2025-hackathon-5-jaego-frontend-q7fyhs576-jyeon03s-projects.vercel.app/',
 ]
 
 #######################################################
