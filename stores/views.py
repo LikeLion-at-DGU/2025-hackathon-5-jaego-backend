@@ -7,15 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from .models import Store
 from .serializers import StoreStep1Serializer, StoreReadSerializer, StoreStep2Serializer
 from django.shortcuts import get_object_or_404
-
-# 권한 (판매자만)
-class IsSeller(BasePermission):
-    message = "판매자만 접근할 수 있습니다."
-
-    def has_permission(self, request, view):
-        return bool(
-            request.user and request.user.is_authenticated and getattr(request.user, "role", None) == "seller"
-        )
+from accounts.permissions import IsSeller
 
 class StoreViewSet(viewsets.GenericViewSet):
     queryset = Store.objects.all()
