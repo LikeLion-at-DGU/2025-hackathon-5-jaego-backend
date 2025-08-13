@@ -16,18 +16,8 @@ from .models import Store
 from .serializers import *
 from products.models import *
 from products.serializers import *
+from accounts.permissions import IsSeller
 
-####################################################################
-# 권한 (판매자만)
-class IsSeller(BasePermission):
-    message = "판매자만 접근할 수 있습니다."
-
-    def has_permission(self, request, view):
-        return bool(
-            request.user and request.user.is_authenticated and getattr(request.user, "role", None) == "seller"
-        )
-        
-####################################################################
 class StoreViewSet(viewsets.GenericViewSet):
     queryset = Store.objects.all()
     permission_classes = [IsAuthenticated, IsSeller]

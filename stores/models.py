@@ -2,9 +2,13 @@ from django.db import models
 from accounts.models import User
 
 # Create your models here.
-# 상점 (판매자 1:N 관계)
+# 상점 (판매자 1:1 관계)
 class Store(models.Model):
-    seller = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'seller'})
+    seller = models.OneToOneField(
+        'accounts.User',
+        on_delete=models.CASCADE,
+        related_name='store',
+    )
     store_name = models.CharField(max_length=100)
     opening_time = models.CharField(max_length=50)
     is_open = models.BooleanField(default=False)
