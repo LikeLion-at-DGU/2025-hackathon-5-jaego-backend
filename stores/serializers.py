@@ -3,13 +3,31 @@ from decimal import Decimal, InvalidOperation
 from .models import Store
 from accounts.models import User
 
+####################################################################
+#( 상점 정보 불러오기 )
+class StoreSerializer(serializers.ModelSerializer):
+    seller_id = serializers.IntegerField(source="seller.id", read_only=True)
+
+    class Meta:
+        model = Store
+        fields = [
+            "id", "seller_id", "store_name", "opening_time",
+            "address", "latitude", "longitude",
+            "is_open", "created_at", "updated_at"
+        ]
+        read_only_fields = ["seller"]
+        
+        
+
+####################################################################
+#(상점 등록)
 class StoreStep1Serializer(serializers.ModelSerializer):
     store_name = serializers.CharField(max_length=100)
     opening_time = serializers.CharField(max_length=50)
     address_search = serializers.CharField(max_length=200)
     address_detail = serializers.CharField(max_length=200, allow_blank=True, required=False)
-    latitude = serializers.CharField() 
-    longitude = serializers.CharField()
+    latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
+    longitude = serializers.DecimalField(max_digits=9, decimal_places=6)
 
     class Meta:
         model = Store
@@ -24,19 +42,12 @@ class StoreStep1Serializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # 위도 경도 검증(숫자/범위)
-        try:
-            lat = Decimal(str(attrs.get("latitude")))
-            lng = Decimal(str(attrs.get("longitude")))
-        except (InvalidOperation, TypeError, ValueError):
-            raise serializers.ValidationError({"latitude": "유효한 숫자여야 합니다.", "longitude": "유효한 숫자여야 합니다."})
-
-        if not (-90 <= float(lat) <= 90):
+        lat = attrs.get("latitude")
+        lng = attrs.get("longitude")
+        if not (-90 <= lat <= 90):
             raise serializers.ValidationError({"latitude": "위도는 -90 ~ 90 사이여야 합니다."})
-        if not (-180 <= float(lng) <= 180):
+        if not (-180 <= lng <= 180):
             raise serializers.ValidationError({"longitude": "경도는 -180 ~ 180 사이여야 합니다."})
-
-        attrs["latitude"] = lat
-        attrs["longitude"] = lng
         return attrs
 
     def create(self, validated_data):
@@ -61,19 +72,6 @@ class StoreStep1Serializer(serializers.ModelSerializer):
         )
         return store
 
-
-class StoreReadSerializer(serializers.ModelSerializer):
-    seller_id = serializers.IntegerField(source="seller.id", read_only=True)
-
-    class Meta:
-        model = Store
-        fields = [
-            "id", "seller_id", "store_name", "opening_time",
-            "address", "latitude", "longitude",
-            "is_open", "created_at", "updated_at"
-        ]
-        read_only_fields = ["seller"]
-
 class StoreStep2Serializer(serializers.ModelSerializer):
     store_id = serializers.IntegerField(write_only=True)
 
@@ -95,3 +93,6 @@ class StoreStep2Serializer(serializers.ModelSerializer):
             setattr(store, field, value)
         store.save()
         return store
+
+####################################################################
+
