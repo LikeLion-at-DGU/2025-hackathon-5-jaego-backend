@@ -1,4 +1,6 @@
-from rest_framework import viewsets, status
+from math import radians, cos, sin, asin, sqrt
+
+from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
 
 from rest_framework.permissions import IsAuthenticated, BasePermission, AllowAny
@@ -10,15 +12,15 @@ from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404
 from django.db.models import Exists, OuterRef
 
-from math import radians, cos, sin, asin, sqrt
 
 from .models import Store
 from .serializers import *
-from products.models import *
-from products.serializers import *
+
 from accounts.permissions import IsSeller
 
-class StoreViewSet(viewsets.GenericViewSet):
+class StoreViewSet(mixins.ListModelMixin, 
+                mixins.RetrieveModelMixin,
+                viewsets.GenericViewSet):
     queryset = Store.objects.all()
     permission_classes = [IsAuthenticated, IsSeller]
     parser_classes = [JSONParser, FormParser, MultiPartParser]
@@ -31,16 +33,11 @@ class StoreViewSet(viewsets.GenericViewSet):
         elif self.action == "signup_step2":
             return StoreStep2Serializer
         
-        #elif self.action == "products":
-        #    return ProductSerializer
-        #elif self.action == "products_summary":
-        #    return ProductSummarySerializer
-
         return StoreSerializer
     
     ## 권한 부여
     def get_permissions(self):
-        #조회 관련 모두 가능
+        #조회 / 상세 / 주변 / 상품조회 / 요약
         if self.action in ["list", "retrieve", "nearby"] :
             return [AllowAny()]
         
@@ -48,11 +45,19 @@ class StoreViewSet(viewsets.GenericViewSet):
         return [IsAuthenticated(),IsSeller()]
 
     ######### (0) 모든 상점 조회 (필터 포함) #########
-    def list(self, request):
-        stores = self.queryset.all()
-        serializers = self.get_serializer(stores, many = True)
+    def list(self, request, *args, **kwargs):
+        qs = self.queryset
+        
+        #1) is_open 필터
+        is_open = request.query_params.get("is_open")
+        if is_open in [ True ]:
+            qs = qs.filter(is_open = True)
+        elif is_open in [ False ]:
+            qs = qs.filter(is_open = False)
+            
+        serializer = self.get_serializer(qs, many =True)
         return Response(serializer.data)
-        #qs = self.queryset
+
         
         #위치 기반 필터링
         #lat = request.query_params.get('latitude')
@@ -109,6 +114,7 @@ class StoreViewSet(viewsets.GenericViewSet):
 
         return Response({
             "store_id": store.id,
+            "name" : store.store_name,
             "is_open": store.is_open
         }, status=status.HTTP_200_OK)
 
@@ -119,7 +125,7 @@ class StoreViewSet(viewsets.GenericViewSet):
         serializer = self.get_serializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         store = serializer.save(seller=request.user)  # 로그인한 판매자를 store의 seller로 설정
-        data = StoreReadSerializer(store).data
+        data = StoreSerializer(store).data
         return Response({"store": data}, status=status.HTTP_201_CREATED)
 
     ######### (2-2) 상점 등록 2 #########
@@ -168,8 +174,8 @@ class StoreViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=['get'], url_path='nearby', permission_classes=[AllowAny])
     def nearby(self, request):
         try:
-            lat = float(request.query_params.get('latitude'))
-            lng = float(request.query_params.get('longitude'))
+            lat = float(request.query_params.get('lat'))
+            lng = float(request.query_params.get('lng'))
             radius_km = float(request.query_params.get('radius', 5))
         except (TypeError, ValueError):
             return Response({"detail": "latitude, longitude는 필수 float 파라미터이며 radius는 선택 파라미터입니다."},
@@ -193,22 +199,28 @@ class StoreViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
     ######### (4) stores/{store_id}/products/ - 상점 내 상품 목록 조회 #########
-    #@action(detail=True, methods=['get'], url_path='products', permission_classes=[AllowAny])
-    #def products(self, request, pk=None):
-    #    store = get_object_or_404(Store, pk=pk)
-    #    is_active = request.query_params.get('is_active')
-    #    products = Product.objects.filter(store=store)
-    #    if is_active is not None:
-    #        if is_active.lower() in ['true', '1']:
-    #            products = products.filter(is_active=True)
-    #        elif is_active.lower() in ['false', '0']:
-    #            products = products.filter(is_active=False)
-    #    serializer = ProductSerializer(products, many=True)
-    #    return Response(serializer.data)
+    @action(detail=True, methods=['get'], url_path='products', permission_classes=[AllowAny])
+    def products(self, request, pk=None):
+        from products.models import Product
+        from products.serializers import ProductReadSerializer
+        
+        store = get_object_or_404(Store, pk=pk)
+        is_active = request.query_params.get('is_active')
+        products = Product.objects.filter(store=store)
+        if is_active is not None:
+            if is_active.lower() in ['true', '1']:
+                products = products.filter(is_active=True)
+            elif is_active.lower() in ['false', '0']:
+                products = products.filter(is_active=False)
+        serializer = ProductReadSerializer(products, many=True)
+        return Response(serializer.data)
 
     ######### (5) stores/{store_id}/products/summary/ - 상품 간략 목록 #########
     #@action(detail=True, methods=['get'], url_path='products/summary', permission_classes=[AllowAny])
     #def products_summary(self, request, pk=None):
+    #    from products.models import Product
+    #    from products.serializers import ProductReadSerializer
+    #    
     #    store = get_object_or_404(Store, pk=pk)
     #    products = Product.objects.filter(store=store, is_active=True)
     #    serializer = ProductSummarySerializer(products, many=True)
