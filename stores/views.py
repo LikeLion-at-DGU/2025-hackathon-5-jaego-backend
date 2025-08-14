@@ -38,7 +38,7 @@ class StoreViewSet(mixins.ListModelMixin,
     ## 권한 부여
     def get_permissions(self):
         #조회 / 상세 / 주변 / 상품조회 / 요약
-        if self.action in ["list", "retrieve", "nearby"] :
+        if self.action in ["list", "retrieve", "nearby","products"] :
             return [AllowAny()]
         
         #signup, 영업시간 체크 -> 판매자만
