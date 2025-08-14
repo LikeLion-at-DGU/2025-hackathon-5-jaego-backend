@@ -26,11 +26,13 @@ class ProductViewSet(viewsets.ModelViewSet):
         if self.action in ["create", "update", "partial_update"]:
             return ProductCreateUpdateSerializer
         return ProductReadSerializer
+    
     def perform_create(self, serializer):
         try:
             store = Store.objects.get(seller=self.request.user)
         except Store.DoesNotExist:
             raise ValidationError({"store": "현재 로그인한 판매자 계정으로 등록된 매장이 없습니다. 매장 가입을 먼저 완료하세요."})
+        
         serializer.save(store=store)
 
     def destroy(self, request, *args, **kwargs):

@@ -12,8 +12,8 @@ class ProductReadSerializer(serializers.ModelSerializer):
         fields = [
             "id", "store", "store_name", "category", "category_name",
             "image", "name", "description",
-            "price", "discount_price", "stock",
-            "expiration_date", "is_active",
+            "price", "discount_price", "discount_rate",
+            "stock", "expiration_date", "is_active",
             "created_at", "updated_at",
         ]
         read_only_fields = ["id", "store", "is_active", "created_at", "updated_at"]
@@ -65,7 +65,14 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"expiration_date": "유통기한은 현재 시각 이후여야 함."})
 
         return attrs
+    
+    #할인율 계산
+    def _calc_discount_rate(self, price, discount_price):
+        if price and discount_price:
+            return round((price - discount_price) / price * 100)
+        return None
 
+    #판매자 id 가져오기
     def _get_sellers_store(self, user):
         try:
             return Store.objects.get(seller=user)  # 1:1 
@@ -74,12 +81,25 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
                 "store": "현재 로그인한 판매자 계정으로 등록된 매장이 없습니다. 매장 가입을 먼저 완료하세요."
             })
 
+    #POST
     def create(self, validated_data):
         request = self.context["request"]
         store = self._get_sellers_store(request.user)
         validated_data["store"] = store
+        
+        validated_data["discount_rate"] = self._calc_discount_rate(
+        validated_data.get("price"),
+        validated_data.get("discount_price")
+        )
         return super().create(validated_data)
 
+    #PATCH
     def update(self, instance, validated_data):
         validated_data.pop("store", None)
+        
+        # price나 discount_price가 변경되었으면 할인율 재계산
+        price = validated_data.get("price", instance.price)
+        discount_price = validated_data.get("discount_price", instance.discount_price)
+        validated_data["discount_rate"] = self._calc_discount_rate(price, discount_price)
+        
         return super().update(instance, validated_data)
