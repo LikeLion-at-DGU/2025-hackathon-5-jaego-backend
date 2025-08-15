@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import timedelta, timezone
 from django.db import models
 
 class Reservation(models.Model):
