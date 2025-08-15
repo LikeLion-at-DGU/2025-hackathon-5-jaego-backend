@@ -1,11 +1,14 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.utils import timezone
-from datetime import timedelta
+
+from rest_framework.permissions import IsAuthenticated
+from accounts.permissions import IsSeller
+
+from django.utils.dateparse import parse_date
 
 from .models import Reservation
-from .serializers import ReservationSerializer, ReservationCreateSerializer
+from .serializers import ReservationSerializer, ReservationCreateSerializer, ReservationUpdateSerializer
 
 class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.all()
@@ -14,67 +17,92 @@ class ReservationViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return ReservationCreateSerializer
         return ReservationSerializer
+    
+    ## 권한 부여
+    def get_permissions(self):
+        #생성 / 목록 -> 로그인 상태
+        if self.action in ["create", "list", "retrieve"] :
+            return [IsAuthenticated()]
+        
+        #status 변경 -> 판매자만
+        return [IsAuthenticated(), IsSeller()]
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_seller:
-            return Reservation.objects.filter(product__seller=user)
-        return Reservation.objects.filter(consumer=user)
+        qs = Reservation.objects.all()
+        
+        if user.role == 'seller':
+            qs = qs.filter(product__store__seller=user)
+        else : 
+            qs = qs.filterr(consumer=user)
 
-    #예약 생성 [POST reservations/products/]
-    def perform_create(self, serializer):
-        product = serializer.validated_data['product']
-        quantity = serializer.validated_data['quantity']
+        #(1) 날짜
+        start_date_str = self.request.query_params.get('start_date')
+        end_date_str = self.request.query_params.get('end_date')
+
+        if start_date_str:
+            start_date = parse_date(start_date_str)
+            if start_date:
+                qs = qs.filter(created_at__date__gte=start_date)
+        if end_date_str:
+            end_date = parse_date(end_date_str)
+            if end_date:
+                qs = qs.filter(created_at__date__lte=end_date)
+
+        #(2) status
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
+            
+        #(3) product_id
+        product_id_param = self.request.query_params.get('product_id')
+        if product_id_param:
+            qs = qs.filter(product__id=product_id_param)
         
-        #재고 차감
-        if product.stock < quantity:
-            raise ValueError("재고 부족")
         
-        product.stok -= quantity
-        if product.stock == 0 :
-            product.is_active = False
-        
-        product.save()
-        
-        #예약 생성 + reserved_at 저장
-        serializer.save(
-            consumer = self.request.user,
-            reserved_at = timezone.now(),
-            status = 'pending'
-        )
-    
-    #예약 목록 조회 [GET reservations/products/]
+        return qs
+
     def list(self, request, *args, **kwargs):
-        # 목록 조회 시 자동 만료 처리
-        for r in self.get_queryset():
-            r.auto_cancel_if_expired()
-        return super().list(request, *args, **kwargs)
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
+    # 예약 상태 변경 권한 검사
+    def _check_seller_owns_reservation(self, reservation):
+        user = self.request.user
+        if user.role != 'seller' or reservation.product.store.seller != user:
+            return False
+        return True
+    
     ############# (예약 상태) ################################
+    def _update_status(self, request, pk, new_status):
+        reservation = self.get_object()
+        if not self._check_seller_owns_reservation(reservation):
+            return Response({"detail": "권한 없음"}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = ReservationUpdateSerializer(
+            reservation, 
+            data={'status': new_status}, 
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    
     #예약 수락 [PATCH reservations/{id}/confirm/]
     @action(detail=True, methods=['patch'])
     def confirm(self, request, pk=None):
-        reservation = self.get_object()
-        reservation.status = 'confirmed'
-        reservation.save()
-        return Response({"status": "confirmed"}, status=status.HTTP_200_OK)
+        return self._update_status(request, pk, 'confirm')
 
     #예약 취소 [PATCH reservations/{id}/cancel/]
     @action(detail=True, methods=['patch'])
     def cancel(self, request, pk=None):
-        reservation = self.get_object()
-        reservation.status = 'cancelled'
-        reservation.product.stock += reservation.quantity
-        reservation.product.save()
-        reservation.save()
-        return Response({"status": "cancelled"}, status=status.HTTP_200_OK)
+        return self._update_status(request, pk, 'cancel')
 
     #예약 픽업 [PATCH reservations/{id}/pickup/]
     @action(detail=True, methods=['patch'])
     def pickup(self, request, pk=None):
-        reservation = self.get_object()
-        reservation.status = 'picked_up'
-        reservation.save()
-        return Response({"status": "picked_up"}, status=status.HTTP_200_OK)
+        return self._update_status(request, pk, 'pickup')
 
     ##########################################################

@@ -1,4 +1,3 @@
-# reservations/tasks.py
 from celery import shared_task
 from django.utils import timezone
 from datetime import timedelta
@@ -11,10 +10,10 @@ def cancel_expired_reservations():
     
     expired = Reservation.objects.filter(
         status='pending',
-        reserved_at__lte= expire_time
+        created_at__lte= expire_time
     )
 
-    for reservation in expire_time:
+    for reservation in expired:
         product = reservation.product
         
         # 재고 복구
@@ -23,11 +22,7 @@ def cancel_expired_reservations():
         product.save()
 
         # 상태 변경
-        reservation.status = 'cancelled'
+        reservation.status = 'cancel'
         reservation.save()
 
     return f"{expired.count()} reservations cancelled."
-
-#test 용
-def add(x,y):
-    return x+y
