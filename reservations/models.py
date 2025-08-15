@@ -1,12 +1,13 @@
 from datetime import timedelta, timezone
 from django.db import models
+from django.forms import ValidationError
 
 class Reservation(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
-        ('confirmed', 'Confirmed'),
-        ('picked_up', 'Picked Up'),
-        ('cancelled', 'Cancelled'),
+        ('confirm', 'Confirm'),
+        ('pickup', 'PickUp'),
+        ('cancel', 'Cancel'),
     ]
     consumer = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='reservations')
     product = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='reservations')
