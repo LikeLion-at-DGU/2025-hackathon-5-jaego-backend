@@ -1,0 +1,153 @@
+[33mcommit d062396016b4f767599a3734ba8c45a186d35a60[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdocs/#16-requirements[m[33m)[m
+Author: Ubuntu <ubuntu@ip-172-31-42-150.ap-northeast-2.compute.internal>
+Date:   Tue Aug 12 01:34:16 2025 +0000
+
+    [#16] requirements.txt 업데이트
+
+[33mcommit 36b868fbf331bcbf3f436ca86f0d369e0cd16b86[m[33m ([m[1;31morigin/dev[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Merge: 892539c 5acaf74
+Author: Yeonhee-Ha <78415838+Yeonhee-Ha@users.noreply.github.com>
+Date:   Tue Aug 12 09:55:56 2025 +0900
+
+    Merge pull request #14 from LikeLion-at-DGU/setting/#13-swagger
+    
+    [#13] setting : Swagger 연동
+
+[33mcommit 5acaf74c4dda2d51e1dd60fe25d7d81bb9619abc[m
+Author: Yeonhee-Ha <flfkrdl123@gmail.com>
+Date:   Tue Aug 12 09:52:08 2025 +0900
+
+    [#13] setting : Swagger 연동
+
+[33mcommit 892539c6925fa975173dccd0f2f3fd5929b605cf[m
+Merge: 382155d 325c965
+Author: minj0206 <alssl03@naver.com>
+Date:   Tue Aug 12 00:11:43 2025 +0900
+
+    Merge pull request #12 from LikeLion-at-DGU/feature/#8-store-step-open
+    
+    [#8]fix: model 내 category 필드 삭제
+
+[33mcommit 325c9653341ea9dbe990797127a1d52e487f109e[m
+Author: minj0206 <alssl03@naver.com>
+Date:   Tue Aug 12 00:07:08 2025 +0900
+
+    [#8]fix: model 내 category 필드 삭제
+
+[33mcommit 382155de86575c13eb05c292c1e765a3bbe7e849[m
+Merge: 9de5506 7d4044b
+Author: Yeonhee-Ha <78415838+Yeonhee-Ha@users.noreply.github.com>
+Date:   Mon Aug 11 23:48:26 2025 +0900
+
+    Merge pull request #10 from LikeLion-at-DGU/feat/#7-Category
+    
+    [#7] feat: 카테고리 상세 보기 API + 카테고리 DB 설정 migrate 파일
+
+[33mcommit 9de55060262f89047cfbe35b17a63d13d0fec94b[m
+Merge: 13c91b8 99baeee
+Author: minj0206 <alssl03@naver.com>
+Date:   Mon Aug 11 23:47:01 2025 +0900
+
+    Merge pull request #9 from LikeLion-at-DGU/feature/#8-store-step-open
+    
+    [#8]feat: 상점 등록 및 영업 상태 변경 API 구현
+
+[33mcommit 7d4044ba0d1c10095d59c1446ecac4fd25c4e504[m
+Author: Yeonhee-Ha <flfkrdl123@gmail.com>
+Date:   Mon Aug 11 23:45:12 2025 +0900
+
+    [#7] feat: 카테고리 상세 보기 API + 카테고리 DB 설정 migrate 파일
+
+[33mcommit 99baeee6c590133156b4279910605c7f8110bd4d[m
+Author: minj0206 <alssl03@naver.com>
+Date:   Mon Aug 11 23:41:36 2025 +0900
+
+    [#8]feat: 상점 등록 및 영업 상태 변경 API 구현
+
+[33mcommit 13c91b8f3bbfa78fc7401262065d441d26ce7d62[m
+Merge: 54f8980 a27f3fc
+Author: Yeonhee-Ha <78415838+Yeonhee-Ha@users.noreply.github.com>
+Date:   Mon Aug 11 20:26:54 2025 +0900
+
+    Merge pull request #6 from LikeLion-at-DGU/feat/#4-user-signup-login-me
+    
+    [#4] consumer, seller / signup, login, me, refreshToken API 구현
+
+[33mcommit a27f3fc634043f5f419a40bd1c18d93d18a455e0[m
+Author: Yeonhee-Ha <flfkrdl123@gmail.com>
+Date:   Mon Aug 11 20:26:13 2025 +0900
+
+    [#4] consumer, seller / signup, login, me, refreshToken API 구현
+
+[33mcommit 54f8980d3a33a87ec62cd635735f584627714b9c[m
+Merge: 3c6b6d8 750df6b
+Author: Yeonhee-Ha <78415838+Yeonhee-Ha@users.noreply.github.com>
+Date:   Mon Aug 11 18:40:55 2025 +0900
+
+    Merge pull request #5 from LikeLion-at-DGU/feat/#2-model-app
+    
+    [#2] User 통합 및 role 로 역할 분할 + store 앱 생성 + 스키마 변경 반영
+
+[33mcommit 750df6be11825680afef4844ffdf1984477b3cca[m
+Author: Yeonhee-Ha <flfkrdl123@gmail.com>
+Date:   Mon Aug 11 18:38:51 2025 +0900
+
+    [#2] User 통합 및 role 로 역할 분할 + store 앱 생성 + 스키마 변경 반영
+
+[33mcommit 3c6b6d8fb228c3c40202351994cb1a89a08f2d72[m
+Merge: de13ef5 e57b1ac
+Author: minj0206 <alssl03@naver.com>
+Date:   Sun Aug 10 15:40:02 2025 +0900
+
+    Merge pull request #3 from LikeLion-at-DGU/feature/#2-app-model-setup
+    
+    [#2]feat: 앱 및 모델 설계
+
+[33mcommit e57b1acfbf3c3a26aecb451dc599e78fe6c3e131[m
+Author: minj0206 <alssl03@naver.com>
+Date:   Sun Aug 10 15:22:38 2025 +0900
+
+    Feat: 앱 및 모델 설계 (#2)
+
+[33mcommit de13ef5075fdf424b1e60cd6dc15b5b8d5ea95c2[m
+Author: Yeonhee-Ha <78415838+Yeonhee-Ha@users.noreply.github.com>
+Date:   Fri Aug 1 10:31:02 2025 +0900
+
+    [#1] docs: Update README.md
+
+[33mcommit 9f0dda161de610e5d95d52365563f01bcf0583d5[m
+Merge: 3e89ccc a5d651e
+Author: Yeonhee-Ha <flfkrdl123@gmail.com>
+Date:   Fri Aug 1 10:01:15 2025 +0900
+
+    [#1] setting: Merge branch 'dev' of https://github.com/LikeLion-at-DGU/2025-hackathon-5----backend into dev
+
+[33mcommit 3e89cccf86493be5684b14ab1f7a53a70616bd6e[m
+Author: Yeonhee-Ha <flfkrdl123@gmail.com>
+Date:   Fri Aug 1 10:00:20 2025 +0900
+
+    [#1] setting: 배포 테스트 파일 설정
+
+[33mcommit a5d651edffa05fae7fa1ef15ca876d9afa1ff5a0[m
+Author: Yeonhee-Ha <78415838+Yeonhee-Ha@users.noreply.github.com>
+Date:   Fri Aug 1 09:30:16 2025 +0900
+
+    [#1] setting: Update issue templates
+
+[33mcommit 283131736e6e85ab4edf5c1ae214b0d76434dc6b[m
+Author: Yeonhee-Ha <flfkrdl123@gmail.com>
+Date:   Sat Jul 26 23:16:26 2025 +0900
+
+    [#1] setting: README 수정
+
+[33mcommit 0a3c0f9de7734eec5097f3a711587b1a02f25ba0[m
+Author: Yeonhee-Ha <flfkrdl123@gmail.com>
+Date:   Sat Jul 26 23:01:58 2025 +0900
+
+    [#1] setting: 초기 백엔드 장고 세팅
+
+[33mcommit e8f48e0b5e32c2546188cc0180fab8c147bb7a89[m
+Author: Yeonhee-Ha <78415838+Yeonhee-Ha@users.noreply.github.com>
+Date:   Sat Jul 26 22:09:53 2025 +0900
+
+    Initial commit
