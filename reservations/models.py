@@ -1,3 +1,4 @@
+from datetime import timezone
 from django.db import models
 
 class Reservation(models.Model):
@@ -15,4 +16,10 @@ class Reservation(models.Model):
     reserved_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.user.email} - {self.product.name} ({self.status})"
+        return f"{self.consumer.email} - {self.product.name} ({self.status})"
+
+    @property
+    def is_expired(self):
+        if not self.reserved_at:
+            return False
+        return timezone.now() > self.reserved_at + timedelta(minutes = 10)
