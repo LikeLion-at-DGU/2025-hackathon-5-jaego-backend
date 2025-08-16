@@ -7,3 +7,13 @@ class IsSeller(BasePermission):
         return bool(
             request.user and request.user.is_authenticated and getattr(request.user, "role", None) == "seller"
         )
+
+class IsConsumer(BasePermission):
+    message = "소비자만 접근할 수 있습니다."
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and getattr(request.user, "role", None) == "consumer"
+        )
