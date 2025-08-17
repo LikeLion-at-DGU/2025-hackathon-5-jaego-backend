@@ -74,18 +74,6 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
 }
 
-# settings.py
-CELERY_BEAT_SCHEDULE = {
-    'cancel-expired-reservations-every-1-minutes': {
-        'task': 'reservations.tasks.cancel_expired_reservations',
-        'schedule': 60.0,  # 1분마다 실행
-    },
-    'deactivate-expired-products-every-1-minutes': {
-        'task': 'products.tasks.deactivate_expired_products',
-        'schedule': 60.0,
-    },
-}
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -186,6 +174,18 @@ CORS_ALLOW_ORIGINS = [
 ]
 
 #######################################################
+CELERY_BEAT_SCHEDULE = {
+    'cancel-expired-reservations-every-30-sec': {
+        'task': 'reservations.tasks.cancel_expired_reservations',
+        'schedule': 30.0,
+    },
+    'deactivate-expired-products-every-30-sec': {
+        'task': 'products.tasks.deactivate_expired_products',
+        'schedule': 30.0,
+    },
+}
+
+
 # Redis 브로커 설정
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/0')
