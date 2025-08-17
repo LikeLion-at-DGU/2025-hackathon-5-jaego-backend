@@ -31,7 +31,7 @@ python-crontab==3.3.0
 python-dateutil==2.9.0.post0
 pytz==2025.2
 PyYAML==6.0.2
-redis==6.4.0
+redis==5.2.1
 six==1.17.0
 sqlparse==0.5.3
 tzdata==2025.2
