@@ -8,13 +8,14 @@ logger = logging.getLogger(__name__)
 
 @shared_task
 def cancel_expired_reservations():
-    now = timezone.now()
+    # 로컬 시간(KST) 기준 now
+    now = timezone.localtime(timezone.now())
     expire_time = now - timedelta(minutes=10)
     
     # 디버그용 로그
     for r in Reservation.objects.filter(status='pending'):
-        print(f"id: {r.id}, created_at: {r.created_at}, now: {now}, expire_time: {expire_time}")
-        logger.info(f"id: {r.id}, created_at: {r.created_at}, now: {now}, expire_time: {expire_time}")
+        created_at_local = timezone.localtime(r.created_at)
+        logger.info(f"🤍 id: {r.id}, created_at: {created_at_local}, now: {now}, expire_time: {expire_time}")
     
     expired = Reservation.objects.filter(
         status='pending',
@@ -33,4 +34,4 @@ def cancel_expired_reservations():
         reservation.status = 'cancel'
         reservation.save()
 
-    return f"{expired.count()} reservations cancelled."
+    return f"❤️ {expired.count()}개 예약 취소."
