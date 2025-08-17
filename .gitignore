@@ -172,6 +172,10 @@ cython_debug/
 # Celery PID file
 celery.pid
 
+# Celery Beat schedule files
+celerybeat-schedule
+celerybeat-schedule-*
+
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
