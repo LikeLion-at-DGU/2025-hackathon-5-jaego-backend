@@ -80,6 +80,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'reservations.tasks.cancel_expired_reservations',
         'schedule': 60.0,  # 1분마다 실행
     },
+    'deactivate-expired-products-every-1-minutes': {
+        'task': 'products.tasks.deactivate_expired_products',
+        'schedule': 60.0,
+    },
 }
 
 
