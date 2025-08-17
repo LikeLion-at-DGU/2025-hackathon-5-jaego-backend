@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from rest_framework.permissions import IsAuthenticated
-from accounts.permissions import IsSeller
+from accounts.permissions import IsSeller, IsConsumer
 
 from django.utils.dateparse import parse_date
 
@@ -20,9 +20,13 @@ class ReservationViewSet(viewsets.ModelViewSet):
     
     ## 권한 부여
     def get_permissions(self):
-        #생성 / 목록 -> 로그인 상태
-        if self.action in ["create", "list", "retrieve"] :
+        #목록 -> 로그인 상태
+        if self.action in ["list"] :
             return [IsAuthenticated()]
+        
+        #생성 / 목록 -> 로그인 상태
+        elif self.action in ["create"] :
+            return [IsAuthenticated(), IsConsumer()]
         
         #status 변경 -> 판매자만
         return [IsAuthenticated(), IsSeller()]
