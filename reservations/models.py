@@ -18,9 +18,3 @@ class Reservation(models.Model):
 
     def __str__(self):
         return f"{self.consumer.email} - {self.product.name} ({self.status})"
-
-    @property
-    def is_expired(self):
-        if not self.reserved_at:
-            return False
-        return timezone.now() > self.reserved_at + timedelta(minutes = 10)

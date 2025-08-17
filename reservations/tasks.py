@@ -8,6 +8,9 @@ def cancel_expired_reservations():
     now = timezone.now()
     expire_time = now - timedelta(minutes = 10)
     
+    for r in Reservation.objects.filter(status='pending'):
+        print(f"id: {r.id}, created_at: {r.created_at}, now: {now}, expire_time: {expire_time}")
+    
     expired = Reservation.objects.filter(
         status='pending',
         created_at__lte= expire_time
