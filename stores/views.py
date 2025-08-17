@@ -3,26 +3,25 @@ from math import radians, cos, sin, asin, sqrt
 from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
 
-from rest_framework.permissions import IsAuthenticated, BasePermission, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 
 from rest_framework.response import Response
 from django.utils.translation import gettext_lazy as _
 
 from django.shortcuts import get_object_or_404
-from django.db.models import Exists, OuterRef
 
 
 from .models import Store
 from .serializers import *
 
-from accounts.permissions import IsSeller
+from accounts.permissions import IsSeller,IsConsumer
 
 class StoreViewSet(mixins.ListModelMixin, 
                 mixins.RetrieveModelMixin,
                 viewsets.GenericViewSet):
     queryset = Store.objects.all()
-    permission_classes = [IsAuthenticated, IsSeller]
+    permission_classes = [IsAuthenticated, IsSeller, IsConsumer]
     parser_classes = [JSONParser, FormParser, MultiPartParser]
 
     ## serializer 설정
@@ -38,8 +37,11 @@ class StoreViewSet(mixins.ListModelMixin,
     ## 권한 부여
     def get_permissions(self):
         #조회 / 상세 / 주변 / 상품조회 / 요약
-        if self.action in ["list", "retrieve", "nearby","products"] :
-            return [AllowAny()]
+        if self.action in ["list", "retrieve","products"] :
+            return [IsAuthenticated()]
+        
+        elif self.action in ["nearby"] :
+            return [IsAuthenticated(), IsConsumer()]
         
         #signup, 영업시간 체크 -> 판매자만
         return [IsAuthenticated(),IsSeller()]
@@ -58,51 +60,6 @@ class StoreViewSet(mixins.ListModelMixin,
         serializer = self.get_serializer(qs, many =True)
         return Response(serializer.data)
 
-        
-        #위치 기반 필터링
-        #lat = request.query_params.get('latitude')
-        #lng = request.query_params.get('longitude')
-        #radius_km = request.query_params.get('radius')
-        
-        # 카테고리 필터링 (category_id)
-        #⚠️ 수정 필요 ... 카테고리를 적용하면 해당 카테고리 상품을 팔고 있는 상점이 뜨게?
-        #category_id = request.query_params.get('category_id')
-
-        #if lat and lng and radius_km:
-        #    try:
-        #        lat = float(lat)
-        #        lng = float(lng)
-        #        radius_km = float(radius_km)
-        #    except ValueError:
-        #        return Response({"detail": "latitude, longitude, radius는 숫자여야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
-
-        #    # 거리계산용 함수
-        #    def haversine(lat1, lon1, lat2, lon2):
-        #        R = 6371
-        #        dlat = radians(lat2 - lat1)
-        #        dlon = radians(lon2 - lon1)
-        #        a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
-        #        c = 2 * asin(sqrt(a))
-        #        return R * c
-
-        #    stores_in_radius = []
-        #    for store in qs:
-        #        dist = haversine(lat, lng, float(store.latitude), float(store.longitude))
-        #        if dist <= radius_km:
-        #            stores_in_radius.append(store.id)
-        #    qs = qs.filter(id__in=stores_in_radius)
-
-        #if category_id:
-        #    qs = qs.filter(
-        #        Exists(
-        #            Product.objects.filter(store=OuterRef('pk'), category_id=category_id)
-        #        )
-        #    )
-
-        #serializer = StoreSerializer(qs, many=True)
-        #return Response(serializer.data)
-    
-    
     ######### (1) 상점 오픈 / 마감 #########
     @action(detail=True, methods=["patch"], url_path="is_open")
     def toggle_is_open(self, request, pk=None):
@@ -171,7 +128,7 @@ class StoreViewSet(mixins.ListModelMixin,
         }, status=status.HTTP_200_OK)
 
     ######### (3) store/nearby/ - 주변 영업 중 상점 조회 #########
-    @action(detail=False, methods=['get'], url_path='nearby', permission_classes=[AllowAny])
+    @action(detail=False, methods=['get'], url_path='nearby')
     def nearby(self, request):
         try:
             lat = float(request.query_params.get('lat'))
@@ -199,12 +156,13 @@ class StoreViewSet(mixins.ListModelMixin,
         return Response(serializer.data)
 
     ######### (4) stores/{store_id}/products/ - 상점 내 상품 목록 조회 #########
-    @action(detail=True, methods=['get'], url_path='products', permission_classes=[AllowAny])
+    @action(detail=True, methods=['get'], url_path='products')
     def products(self, request, pk=None):
         from products.models import Product
         from products.serializers import ProductReadSerializer
         
         store = get_object_or_404(Store, pk=pk)
+        
         is_active = request.query_params.get('is_active')
         products = Product.objects.filter(store=store)
         if is_active is not None:
@@ -212,6 +170,7 @@ class StoreViewSet(mixins.ListModelMixin,
                 products = products.filter(is_active=True)
             elif is_active.lower() in ['false', '0']:
                 products = products.filter(is_active=False)
+                
         serializer = ProductReadSerializer(products, many=True)
         return Response(serializer.data)
 
