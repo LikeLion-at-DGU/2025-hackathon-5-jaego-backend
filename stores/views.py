@@ -47,6 +47,7 @@ class StoreViewSet(mixins.ListModelMixin,
         return [IsAuthenticated(),IsSeller()]
 
     ######### (0) 모든 상점 조회 (필터 포함) #########
+    #GET /stores/
     def list(self, request, *args, **kwargs):
         qs = self.queryset
         
@@ -61,10 +62,14 @@ class StoreViewSet(mixins.ListModelMixin,
         return Response(serializer.data)
 
     ######### (1) 상점 오픈 / 마감 #########
-    @action(detail=True, methods=["patch"], url_path="is_open")
+    # POST /stores/{store_id}/is_open/
+    @action(detail=False, methods=["patch"], url_path="is_open")
     def toggle_is_open(self, request, pk=None):
-        store = get_object_or_404(Store, pk=pk, seller=request.user)
-
+        try:
+            store = Store.objects.get(seller = request.user)
+        except Store.DoesNotExist:
+            return Response({"detal" : "해당 사용자의 상점이 없습니다."})
+        
         # 현재 값 반전
         store.is_open = not store.is_open
         store.save(update_fields=["is_open"])
