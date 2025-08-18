@@ -151,6 +151,8 @@ class ProductViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        search = request.query_params.get("search", "").strip()  # 검색어 추가
+
         # 오픈 상태인 가게만 필터링
         stores = Store.objects.filter(is_open=True)
 
@@ -166,8 +168,15 @@ class ProductViewSet(viewsets.ModelViewSet):
             Product.objects
             .select_related("store", "category")
             .filter(is_active=True, store__id__in=nearby_store_ids)
-            .order_by("-id")
         )
+
+        # 검색어: 상품명 + 가게명 둘 다 지원
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) | Q(store__name__icontains=search)
+            )
+
+        queryset = queryset.order_by("-id")
 
         page = self.paginate_queryset(queryset)
         if page is not None:
