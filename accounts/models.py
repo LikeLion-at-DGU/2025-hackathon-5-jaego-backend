@@ -63,3 +63,16 @@ class RecommendedKeyword(models.Model):
 
     def __str__(self):
         return f"{self.consumer.name} - {self.keyword} ({self.score})"
+
+# 키워드 추출 결과 저장
+class KeywordCache(models.Model):
+    product_name = models.CharField(max_length=100)
+    category_name = models.CharField(max_length=100)
+    keywords = models.JSONField()  # GPT 결과 (리스트 형태 저장)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('product_name', 'category_name')
+
+    def __str__(self):
+        return f"{self.product_name} ({self.category_name})"
