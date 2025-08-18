@@ -15,6 +15,9 @@ from .serializers import *
 
 from .services.recommend import extract_keywords
 from .models import RecommendedKeyword
+from products.serializers import ProductReadSerializer
+from django.db.models import Q
+from accounts.permissions import IsConsumer
 
 User = get_user_model()
 
@@ -96,6 +99,44 @@ class ConsumerViewSet(viewsets.GenericViewSet):
             saved_keywords.append(obj.keyword)
 
         return Response({"keywords": saved_keywords}, status=200)
+
+class RecommendView(APIView):
+    permission_classes = [IsAuthenticated, IsConsumer]
+
+    def get(self, request):
+        user = request.user
+
+        # 상위 3개 키워드
+        top_keywords = (
+            RecommendedKeyword.objects
+            .filter(consumer=user, score__gt=0)
+            .order_by("-score")[:3]
+        )
+        keyword_list = [rk.keyword for rk in top_keywords]
+
+        if not keyword_list:
+            return Response(
+                {"detail": "추천할 키워드가 없습니다. 찜을 먼저 해주세요."},
+                status=200
+            )
+
+        # 상품명 + 카테고리명에서만 검색
+        query = Q()
+        for kw in keyword_list:
+            query |= Q(name__icontains=kw)
+            query |= Q(category__name__icontains=kw)
+
+        queryset = (
+            Product.objects
+            .select_related("store", "category")
+            .filter(is_active=True, store__is_open=True)
+            .filter(query)
+            .distinct()
+            .order_by("-id")
+        )
+
+        serializer = ProductReadSerializer(queryset, many=True, context={"request": request})
+        return Response(serializer.data, status=200)
 
 ########################################################
 # (2) Seller
