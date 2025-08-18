@@ -10,7 +10,8 @@ from math import radians, cos, sin, asin, sqrt
 
 from accounts.permissions import IsSeller, IsConsumer
 from stores.models import Store
-from .models import Product, Wishlist
+from .models import Product, Wishlist, RecommendedKeyword
+from .utils import get_keywords_from_gpt_or_cache
 from .serializers import ProductReadSerializer, ProductCreateUpdateSerializer
 
 
@@ -150,6 +151,8 @@ class ProductViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        search = request.query_params.get("search", "").strip()  # 검색어 추가
+
         # 오픈 상태인 가게만 필터링
         stores = Store.objects.filter(is_open=True)
 
@@ -165,8 +168,15 @@ class ProductViewSet(viewsets.ModelViewSet):
             Product.objects
             .select_related("store", "category")
             .filter(is_active=True, store__id__in=nearby_store_ids)
-            .order_by("-id")
         )
+
+        # 검색어: 상품명 + 가게명 둘 다 지원
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) | Q(store__name__icontains=search)
+            )
+
+        queryset = queryset.order_by("-id")
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -222,4 +232,54 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         serializer = ProductReadSerializer(queryset, many=True, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="wishlist",
+        permission_classes=[IsAuthenticated, IsConsumer],
+    )
+    def toggle_wishlist(self, request, pk=None):
+        product = get_object_or_404(
+            Product.objects.select_related("store", "category").filter(is_active=True),
+            pk=pk
+        )
+
+        wl, created = Wishlist.objects.get_or_create(
+            consumer=request.user,
+            product=product,
+        )
+
+        keywords = get_keywords_from_gpt_or_cache(product.name, product.category.name)
+
+        if created:
+            # 찜 추가 시 -> 점수 +1
+            for kw in keywords:
+                rk, _ = RecommendedKeyword.objects.get_or_create(
+                    consumer=request.user,
+                    keyword=kw,
+                    defaults={"score": 0}
+                )
+                rk.score += 1
+                rk.save(update_fields=["score", "updated_at"])
+            wishlisted = True
+        else:
+            # 찜 삭제 시 -> 점수 -1 (최소 0)
+            for kw in keywords:
+                try:
+                    rk = RecommendedKeyword.objects.get(
+                        consumer=request.user,
+                        keyword=kw
+                    )
+                    rk.score = max(0, rk.score - 1)
+                    rk.save(update_fields=["score", "updated_at"])
+                except RecommendedKeyword.DoesNotExist:
+                    pass
+            wl.delete()
+            wishlisted = False
+
+        return Response(
+            {"product_id": product.id, "wishlisted": wishlisted},
+            status=status.HTTP_200_OK
+        )
 

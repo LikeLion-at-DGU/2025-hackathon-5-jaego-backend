@@ -13,6 +13,9 @@ from django.contrib.auth import get_user_model
 
 from .serializers import *
 
+from .services.recommend import extract_keywords
+from .models import RecommendedKeyword
+
 User = get_user_model()
 
 class ConsumerViewSet(viewsets.GenericViewSet):
@@ -67,6 +70,32 @@ class ConsumerViewSet(viewsets.GenericViewSet):
             return Response({"detail": "소비자만 접근 가능합니다."}, status=status.HTTP_403_FORBIDDEN)
         serializer = ConsumerSerializer(user)
         return Response(serializer.data)
+
+    # 추천 상품 관련 로직
+    @action(detail=False, methods=['post'])
+    def generate_keywords(self, request):# 상품명 + 카테고리 전달 -> 키워드 생성
+        product_name = request.data.get("product_name")
+        category_name = request.data.get("category_name")
+
+        if not product_name or not category_name:
+            return Response({"detail": "상품명과 카테고리는 필수입니다."}, status=400)
+
+        keywords = extract_keywords(product_name, category_name)
+
+        # DB 저장 (소비자 전용)
+        consumer = request.user
+        if consumer.role != "consumer":
+            return Response({"detail": "소비자만 접근 가능합니다."}, status=403)
+
+        saved_keywords = []
+        for kw in keywords:
+            obj, _ = RecommendedKeyword.objects.update_or_create(
+                consumer=consumer, keyword=kw,
+                defaults={"score": 1.0},
+            )
+            saved_keywords.append(obj.keyword)
+
+        return Response({"keywords": saved_keywords}, status=200)
 
 ########################################################
 # (2) Seller
