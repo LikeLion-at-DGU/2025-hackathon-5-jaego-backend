@@ -127,4 +127,4 @@ class NotificationViewSet(viewsets.ModelViewSet):
         notification = self.get_object()
         notification.is_read = True
         notification.save()
-        return Response({"detail": "읽음 처리 완료"})
+        return Response({"detail": f"({notification.id} 번 알림) - [{notification.status}] 읽음 처리 완료"})
