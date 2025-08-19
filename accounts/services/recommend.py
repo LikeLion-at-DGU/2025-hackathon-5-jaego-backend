@@ -1,6 +1,6 @@
 import os
 from openai import OpenAI
-from .models import KeywordCache
+from ..models import KeywordCache
 from django.utils import timezone
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
