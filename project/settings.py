@@ -173,8 +173,8 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_ORIGINS = [
-    'http://https://simbatda.netlify.app/',
-    'https://https://simbatda.netlify.app/',
+    'http://simbatda.netlify.app/',
+    'https://simbatda.netlify.app/',
     
     'http://localhost:5173/',
     'https://localhost:5173/',
