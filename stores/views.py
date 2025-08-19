@@ -84,12 +84,24 @@ class StoreViewSet(mixins.ListModelMixin,
     ######### (2-1) 상점 등록 1 #########
     @action(detail=False, methods=["post"], url_path="signup/step1")
     def signup_step1(self, request, *args, **kwargs):
+        # 1) 이미 상점 존재 여부 확인
+        store = Store.objects.filter(seller=request.user).first()
+        if store:
+            # 이미 존재하면 step1 다시 생성하지 않고 기존 정보 반환
+            return Response({
+                "detail": "이미 상점이 존재합니다.",
+                "store": StoreSerializer(store).data
+            }, status=status.HTTP_200_OK)
+
+        # 2) 새로운 상점 생성
         serializer = self.get_serializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
-        store = serializer.save(seller=request.user)  # 로그인한 판매자를 store의 seller로 설정
-        data = StoreSerializer(store).data
-        return Response({"store": data}, status=status.HTTP_201_CREATED)
-
+        store = serializer.save(seller=request.user)
+        return Response({
+            "detail": "상점 Step1 생성 완료",
+            "store": StoreSerializer(store).data
+        }, status=status.HTTP_201_CREATED)
+    
     ######### (2-2) 상점 등록 2 #########
     @action(detail=False, methods=["post"], url_path="signup/step2")
     def signup_step2(self, request, *args, **kwargs):
@@ -129,55 +141,68 @@ class StoreViewSet(mixins.ListModelMixin,
         return Response({
             "message": message,
             "uploads": uploads,
-            "store": StoreReadSerializer(store).data
+            "store": StoreSerializer(store).data
         }, status=status.HTTP_200_OK)
 
     ######### (3) store/nearby/ - 주변 영업 중 상점 조회 #########
-    @action(detail=False, methods=['get'], url_path='nearby')
-    def nearby(self, request):
-        try:
-            lat = float(request.query_params.get('lat'))
-            lng = float(request.query_params.get('lng'))
-            radius_km = float(request.query_params.get('radius', 5))
-        except (TypeError, ValueError):
-            return Response({"detail": "latitude, longitude는 필수 float 파라미터이며 radius는 선택 파라미터입니다."},
-                            status=status.HTTP_400_BAD_REQUEST)
+    @action(detail=False, methods=["post"], url_path="signup/step2")
+    def signup_step2(self, request, *args, **kwargs):
+        """
+        상점 등록 Step2: 파일 업로드
+        이미 업로드된 경우 중복 방지
+        """
+        # 1) 현재 사용자의 상점 가져오기
+        store = Store.objects.filter(seller=request.user).first()
+        if not store:
+            return Response({"detail": "Step1을 먼저 완료해야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-        def haversine(lat1, lon1, lat2, lon2):
-            R = 6371
-            dlat = radians(lat2 - lat1)
-            dlon = radians(lon2 - lon1)
-            a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
-            c = 2 * asin(sqrt(a))
-            return R * c
+        # 2) 이미 Step2 완료 여부 확인 (모든 파일이 존재하면 완료로 간주)
+        if store.business_license and store.permit_doc and store.bank_copy:
+            return Response({
+                "detail": "Step2 파일이 이미 모두 업로드되어 있습니다.",
+                "store": StoreSerializer(store).data
+            }, status=status.HTTP_200_OK)
 
-        stores = []
-        for store in Store.objects.filter(is_open=True):
-            dist = haversine(lat, lng, float(store.latitude), float(store.longitude))
-            if dist <= radius_km:
-                stores.append(store)
+        # 3) Serializer로 파일 업데이트
+        serializer = self.get_serializer(store, data=request.data, partial=True, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        store = serializer.save()
 
-        serializer = StoreSerializer(stores, many=True)
-        return Response(serializer.data)
+        # 4) 업로드 확인
+        def file_info(f):
+            if not f:
+                return {"uploaded": False}
+            try:
+                url = request.build_absolute_uri(f.url)
+            except Exception:
+                url = None
+            return {"uploaded": True}
 
-    ######### (4) stores/{store_id}/products/ - 상점 내 상품 목록 조회 #########
-    @action(detail=True, methods=['get'], url_path='products')
-    def products(self, request, pk=None):
-        from products.models import Product
-        from products.serializers import ProductReadSerializer
-        
-        store = get_object_or_404(Store, pk=pk)
-        
-        is_active = request.query_params.get('is_active')
-        products = Product.objects.filter(store=store)
-        if is_active is not None:
-            if is_active.lower() in ['true', '1']:
-                products = products.filter(is_active=True)
-            elif is_active.lower() in ['false', '0']:
-                products = products.filter(is_active=False)
-                
-        serializer = ProductReadSerializer(products, many=True)
-        return Response(serializer.data)
+        uploads = {
+            "business_license": file_info(store.business_license),
+            "permit_doc":       file_info(store.permit_doc),
+            "bank_copy":        file_info(store.bank_copy),
+        }
+
+        # 5) 메시지 설정
+        success_all = all(v["uploaded"] for v in uploads.values())
+        if success_all:
+            message = "3개 파일이 모두 업로드 됨."
+        else:
+            missing = [k for k, v in uploads.items() if not v["uploaded"]]
+            pretty = ", ".join({
+                "business_license": "사업자 등록증",
+                "permit_doc": "영업 신고증",
+                "bank_copy": "통장 사본"
+            }[k] for k in missing)
+            message = f"{pretty} 업로드가 누락됨"
+
+        return Response({
+            "message": message,
+            "uploads": uploads,
+            "store": StoreSerializer(store).data
+        }, status=status.HTTP_200_OK)
+
 
     ######### (5) stores/{store_id}/products/summary/ - 상품 간략 목록 #########
     #@action(detail=True, methods=['get'], url_path='products/summary', permission_classes=[AllowAny])
