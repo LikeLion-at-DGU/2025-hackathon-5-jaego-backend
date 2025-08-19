@@ -8,6 +8,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 
@@ -15,6 +18,7 @@ from .serializers import *
 
 from .services.recommend import extract_keywords
 from .models import RecommendedKeyword
+from products.models import Product
 from products.serializers import ProductReadSerializer
 from django.db.models import Q
 from accounts.permissions import IsConsumer
@@ -103,6 +107,20 @@ class ConsumerViewSet(viewsets.GenericViewSet):
 class RecommendView(APIView):
     permission_classes = [IsAuthenticated, IsConsumer]
 
+    @swagger_auto_schema(
+        operation_summary="추천 키워드 기반 상품 조회",
+        operation_description="소비자 전용. 상위 3개 추천 키워드로 상품 검색 후 반환합니다.",
+        responses={
+            200: openapi.Response(
+                description="추천 상품 리스트",
+                schema=ProductReadSerializer(many=True)
+            ),
+            403: "소비자가 아닌 경우 접근 불가",
+            401: "인증 필요"
+        }
+    )
+    
+    
     def get(self, request):
         user = request.user
 
