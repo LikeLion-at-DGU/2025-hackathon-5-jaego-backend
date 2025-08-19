@@ -169,16 +169,16 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_ORIGINS = [
-    'http://simbatda.netlify.app/',
-    'https://simbatda.netlify.app/',
-    
-    'http://localhost:5173/',
-    'https://localhost:5173/',
-]
+#CORS_ALLOW_ORIGINS = [
+#    'http://simbatda.netlify.app/',
+#    'https://simbatda.netlify.app/',
+#    
+#    'http://localhost:5173/',
+#    'https://localhost:5173/',
+#]
 
 #######################################################
 CELERY_BEAT_SCHEDULE = {
