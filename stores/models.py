@@ -21,3 +21,6 @@ class Store(models.Model):
     bank_copy = models.FileField(upload_to='bank_copies/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.store_name} - ({self.seller.name})"
