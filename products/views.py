@@ -90,26 +90,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         url_path="wishlist",
         permission_classes=[IsAuthenticated, IsConsumer],  # 소비자만
     )
-    def toggle_wishlist(self, request, pk=None):
-        product = get_object_or_404(
-            Product.objects.select_related("store", "category").filter(is_active=True),
-            pk=pk
-        )
-
-        wl, created = Wishlist.objects.get_or_create(
-            consumer=request.user,
-            product=product,
-        )
-        if created:
-            wishlisted = True
-        else:
-            wl.delete()
-            wishlisted = False
-
-        return Response(
-            {"product_id": product.id, "wishlisted": wishlisted},
-            status=status.HTTP_200_OK
-        )
 
     # 소비자 위시리스트 목록 조회
     @action(
@@ -234,6 +214,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = ProductReadSerializer(queryset, many=True, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    #찜 + 추천 키워드
     @action(
         detail=True,
         methods=["post"],
