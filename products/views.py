@@ -10,8 +10,9 @@ from math import radians, cos, sin, asin, sqrt
 
 from accounts.permissions import IsSeller, IsConsumer
 from stores.models import Store
-from .models import Product, Wishlist, RecommendedKeyword
-from .utils import get_keywords_from_gpt_or_cache
+from .models import Product, Wishlist
+from accounts.models import RecommendedKeyword
+from accounts.services.recommend import get_keywords_from_gpt_or_cache
 from .serializers import ProductReadSerializer, ProductCreateUpdateSerializer
 
 
