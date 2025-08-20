@@ -3,6 +3,7 @@ from django.urls import path, include
 from .views import *
 
 router = DefaultRouter()
+router.register(r"notifications", NotificationViewSet, basename="notification")
 router.register(r"", ReservationViewSet, basename="reservation")
 
 urlpatterns = [

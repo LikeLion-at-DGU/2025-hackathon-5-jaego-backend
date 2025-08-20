@@ -1,6 +1,6 @@
 from django.utils import timezone
 from rest_framework import serializers
-from .models import Reservation
+from .models import Reservation, Notification
 
 class ReservationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True) 
@@ -117,6 +117,24 @@ class ReservationUpdateSerializer(serializers.ModelSerializer):
             product.is_active = True
             product.save()
 
+        #상태 변경
         instance.status = new_status
         instance.save()
+        
+        # Notification 생성
+        Notification.objects.get_or_create(
+            reservation=instance,
+            status=new_status,
+            defaults={'is_read': False}
+        )
+        
         return instance
+
+#########################################################
+# 알람
+class NotificationSerializer(serializers.ModelSerializer):
+    reservation_id = serializers.IntegerField(source="reservation.id", read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = ["id", "reservation_id", "status", "is_read", "created_at", "updated_at"]

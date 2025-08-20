@@ -7,8 +7,8 @@ from accounts.permissions import IsSeller, IsConsumer
 
 from django.utils.dateparse import parse_date
 
-from .models import Reservation
-from .serializers import ReservationSerializer, ReservationCreateSerializer, ReservationUpdateSerializer
+from .models import Reservation, Notification
+from .serializers import ReservationSerializer, ReservationCreateSerializer, ReservationUpdateSerializer, NotificationSerializer
 
 class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.all()
@@ -38,7 +38,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
         if user.role == 'seller':
             qs = qs.filter(product__store__seller=user)
         else : 
-            qs = qs.filterr(consumer=user)
+            qs = qs.filter(consumer=user)
 
         #(1) 날짜
         start_date_str = self.request.query_params.get('start_date')
@@ -110,3 +110,21 @@ class ReservationViewSet(viewsets.ModelViewSet):
         return self._update_status(request, pk, 'pickup')
 
     ##########################################################
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    queryset = Notification.objects.all()
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated, IsConsumer]
+
+    def get_queryset(self):
+        # 로그인한 사용자 본인의 reservation 알림만 보이도록
+        user = self.request.user
+        return Notification.objects.filter(reservation__consumer=user)
+    
+    ## 읽음 처리 API
+    @action(detail=True, methods=['patch'])
+    def read(self, request, pk=None):
+        notification = self.get_object()
+        notification.is_read = True
+        notification.save()
+        return Response({"detail": f"({notification.id} 번 알림) - [{notification.status}] 읽음 처리 완료"})
