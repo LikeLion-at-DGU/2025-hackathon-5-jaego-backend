@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_yasg',
     
+    'products.apps.ProductsConfig',
 
     'accounts',
     'categories',
