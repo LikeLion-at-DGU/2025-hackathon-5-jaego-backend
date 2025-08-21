@@ -99,7 +99,8 @@ class ReservationUpdateSerializer(serializers.ModelSerializer):
         # 상태 변경 유효성 검사
         valid_transitions = {
             'pending': ['confirm', 'cancel'],
-            'confirm': ['pickup'], 
+            'confirm': ['ready'], 
+            'ready' : ['pickup'],
             'pickup': [],
             'cancel': []
         }
