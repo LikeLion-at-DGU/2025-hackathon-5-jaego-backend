@@ -122,10 +122,14 @@ class ProductViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated, IsConsumer],
     )
     def all_products(self, request):
+        lat = request.query_params.get("lat")
+        lng = request.query_params.get("lng")
+        radius = request.query_params.get("radius", 5) 
+        
         try:
-            lat = float(request.query_params.get("lat"))
-            lng = float(request.query_params.get("lng"))
-            radius = float(request.query_params.get("radius", 5))  # 기본 5km
+            lat = float(lat) if lat is not None else None
+            lng = float(lng) if lng is not None else None
+            radius = float(radius)
         except (TypeError, ValueError):
             return Response(
                 {"error": "lat, lng, radius 파라미터를 올바르게 입력하세요."},
@@ -137,18 +141,26 @@ class ProductViewSet(viewsets.ModelViewSet):
         # 오픈 상태인 가게만 필터링
         stores = Store.objects.filter(is_open=True)
 
-        # 거리 필터링
-        nearby_store_ids = []
-        for store in stores:
-            if store.latitude and store.longitude:
-                dist = haversine(lng, lat, store.longitude, store.latitude)
-                if dist <= radius:
-                    nearby_store_ids.append(store.id)
+        # 기본 : 모든 store id
+        nearby_store_ids = stores.values_list("id", flat = True)
+
+        # lat/lng 있으면 반경 필터 
+        if lat is not None and lng is not None:
+            nearby_store_ids = []
+            for store in stores:
+                if store.latitude and store.longitude:
+                    dist = haversine(lng, lat, store.longitude, store.latitude)
+                    if dist <= radius:
+                        nearby_store_ids.append(store.id)
+            # 범위 내 가게가 없으면 빈 queryset이 되지 않도록
+            if nearby_store_ids:
+                stores = stores.filter(id__in=nearby_store_ids)
+        # lat/lng가 없으면 stores 그대로 전체 범위 사용
 
         queryset = (
             Product.objects
             .select_related("store", "category")
-            .filter(is_active=True, store__id__in=nearby_store_ids)
+            .filter(is_active=True, store__in=nearby_store_ids)
         )
 
         # 검색어: 상품명 + 가게명 둘 다 지원
