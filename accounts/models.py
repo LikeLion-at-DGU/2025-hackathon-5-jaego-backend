@@ -43,7 +43,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     def __str__(self):
-        return f"{self.email} ({self.role})"
+        return f"[{self.id}] {self.email} ({self.role})"
 
 ################################################################
 # ( 3 ) 추천 키워드 ( consumer 전용 )
@@ -62,7 +62,7 @@ class RecommendedKeyword(models.Model):
         unique_together = ('consumer', 'keyword')  # 같은 키워드 중복 방지
 
     def __str__(self):
-        return f"{self.consumer.name} - {self.keyword} ({self.score})"
+        return f"[{self.id}] {self.consumer.name} - {self.keyword} ({self.score})"
 
 # 키워드 추출 결과 저장
 class KeywordCache(models.Model):
