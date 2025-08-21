@@ -113,6 +113,11 @@ class ReservationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['patch'])
     def pickup(self, request, pk=None):
         return self._update_status(request, pk, 'pickup')
+    
+    #예약 준비 완료 [PATCH reservations/{id}/ready/]
+    @action(detail=True, methods=['patch'])
+    def ready(self, request, pk=None):
+        return self._update_status(request, pk, 'ready')
 
     ##########################################################
 

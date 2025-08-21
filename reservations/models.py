@@ -7,13 +7,17 @@ class Reservation(models.Model):
         ('pending', 'Pending'),
         ('confirm', 'Confirm'),
         ('pickup', 'PickUp'),
+        ('ready', 'Ready'),
         ('cancel', 'Cancel'),
     ]
     consumer = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='reservations')
     product = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='reservations')
     quantity = models.PositiveIntegerField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    #pending
     created_at = models.DateTimeField(auto_now_add=True)
+    #confirm
     reserved_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
@@ -35,6 +39,7 @@ class Notification(models.Model):
     STATUS_CHOICES = [
         ('confirm', 'Confirm'),
         ('pickup', 'PickUp'),
+        ('ready','Ready'),
         ('cancel', 'Cancel'),
     ]
     reservation = models.ForeignKey(
