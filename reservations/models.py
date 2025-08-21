@@ -17,8 +17,19 @@ class Reservation(models.Model):
     reserved_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.consumer.email} - {self.product.name} ({self.status})"
+        return f"[{self.id}] {self.consumer.email} - {self.product.name} ({self.status})"
+
+class ReservationCancelReason(models.Model):
+    reservation = models.OneToOneField(
+        'Reservation',
+        on_delete=models.CASCADE,
+        related_name='cancel_reason'
+    )
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
     
+    def __str__(self):
+        return f"[{self.id}] ({self.reservation.id}) - {self.reason[:30]}"
 
 class Notification(models.Model):
     STATUS_CHOICES = [
@@ -37,4 +48,4 @@ class Notification(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"[{self.reservation.id}]{self.status}({'읽음' if self.is_read else '안읽음'})"
+        return f"[{self.id}] - ({self.reservation.id}){self.status}({'읽음' if self.is_read else '안읽음'})"
