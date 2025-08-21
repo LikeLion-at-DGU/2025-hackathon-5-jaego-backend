@@ -53,10 +53,8 @@ INSTALLED_APPS = [
     'drf_yasg',
     
     'products.apps.ProductsConfig',
-
     'accounts',
     'categories',
-    'products',
     'reservations',
     'stores'
 ]
