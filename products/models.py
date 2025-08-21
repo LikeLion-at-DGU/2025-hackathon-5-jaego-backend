@@ -17,7 +17,7 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
+        return f"[{self.id}] {self.name} {self.is_active})"
 
 
 class Wishlist(models.Model):
@@ -28,4 +28,4 @@ class Wishlist(models.Model):
         unique_together = ('consumer', 'product')
 
     def __str__(self):
-        return f"{self.consumer.email} -> {self.product.name}"
+        return f"[{self.id}] {self.consumer.email} -> {self.product.name}"
