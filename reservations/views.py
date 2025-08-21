@@ -8,7 +8,7 @@ from accounts.permissions import IsSeller, IsConsumer
 from django.utils.dateparse import parse_date
 
 from .models import Reservation, Notification
-from .serializers import ReservationSerializer, ReservationCreateSerializer, ReservationUpdateSerializer, NotificationSerializer
+from .serializers import ReservationReadSerializer, ReservationCreateSerializer, ReservationUpdateSerializer, NotificationSerializer
 
 class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.all()
@@ -16,7 +16,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'create':
             return ReservationCreateSerializer
-        return ReservationSerializer
+        return ReservationReadSerializer
     
     ## 권한 부여
     def get_permissions(self):
@@ -84,9 +84,14 @@ class ReservationViewSet(viewsets.ModelViewSet):
         if not self._check_seller_owns_reservation(reservation):
             return Response({"detail": "권한 없음"}, status=status.HTTP_403_FORBIDDEN)
 
+        data = {'status' : new_status}
+        if new_status == 'cancel':
+            reason = request.data.get('cancel_reason')
+            data['cancel_reason'] = reason
+        
         serializer = ReservationUpdateSerializer(
             reservation, 
-            data={'status': new_status}, 
+            data=data, 
             partial=True
         )
         serializer.is_valid(raise_exception=True)

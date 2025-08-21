@@ -1,10 +1,12 @@
 from django.utils import timezone
 from rest_framework import serializers
-from .models import Reservation, Notification
+from .models import Reservation, Notification, ReservationCancelReason
 
-class ReservationSerializer(serializers.ModelSerializer):
+class ReservationReadSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True) 
     consumer = serializers.SerializerMethodField()
+    cancel_reason = serializers.SerializerMethodField()
+    
     reserved_at = serializers.DateTimeField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     status = serializers.CharField(read_only=True)
@@ -20,6 +22,11 @@ class ReservationSerializer(serializers.ModelSerializer):
             'email': user.email,
             'phone': getattr(user, 'phone', '')
         }
+    
+    def get_cancel_reason(self, obj):
+        if hasattr(obj, 'cancel_reason'):
+            return obj.cancel_reason.reason
+        return None
 
 class ReservationCreateSerializer(serializers.ModelSerializer):
     consumer = serializers.SerializerMethodField()
@@ -65,14 +72,13 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
         )
         return reservation
 
-from rest_framework import serializers
-from .models import Reservation
-
 class ReservationUpdateSerializer(serializers.ModelSerializer):
     consumer = serializers.SerializerMethodField()
+    cancel_reason = serializers.CharField(write_only = True, required = False)
     class Meta:
         model = Reservation
         fields = '__all__'
+        read_only_fields = ["created_at", "consumer", "product", "quantity", "reserved_at"]
         
     def get_consumer(self, obj):
         user = obj.consumer
@@ -93,13 +99,16 @@ class ReservationUpdateSerializer(serializers.ModelSerializer):
         # 상태 변경 유효성 검사
         valid_transitions = {
             'pending': ['confirm', 'cancel'],
-            'confirm': ['pickup', 'cancel'], #픽업만 가능하게?
+            'confirm': ['pickup'], 
             'pickup': [],
             'cancel': []
         }
         if new_status not in valid_transitions[reservation.status]:
             raise serializers.ValidationError(f"{reservation.status} → {new_status} 변경은 허용되지 않습니다.")
 
+        if new_status == 'cancel' and not attrs.get('cancel_reason'):
+            raise serializers.ValidationError("예약 취소 시 취소 사유를 입력하세요.")
+        
         return attrs
 
     def update(self, instance, validated_data):
@@ -112,6 +121,15 @@ class ReservationUpdateSerializer(serializers.ModelSerializer):
 
         # cancel → 재고 복구
         if new_status == 'cancel':
+            reason_text = validated_data.pop('cancel_reason', None)
+            
+            # 취소 사유 저장
+            ReservationCancelReason.objects.create(
+                reservation = instance,
+                reason = reason_text
+            )
+            
+            # 재고 복구
             product = instance.product
             product.stock += instance.quantity
             product.is_active = True
