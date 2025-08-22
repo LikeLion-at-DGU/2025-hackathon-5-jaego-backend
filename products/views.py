@@ -140,7 +140,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             )
             
         if category_id:
-            queryset = queryset.filter(categpry_id = category_id)
+            queryset = queryset.filter(category_id = category_id)
 
         queryset = queryset.order_by("-id")
 
