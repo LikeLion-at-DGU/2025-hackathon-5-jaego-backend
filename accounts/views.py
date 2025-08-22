@@ -93,7 +93,10 @@ class ConsumerViewSet(viewsets.GenericViewSet):
         user = request.user
         products = recommend_for_user(user, limit=20)
         
-        serializer = ProductReadSerializer(products, many=True, context={"request": request})
+        # id 기준 내림차순 정렬 (최신 순)
+        products_sorted = sorted(products, key=lambda x: x.id, reverse=True)
+        
+        serializer = ProductReadSerializer(products_sorted, many=True, context={"request": request})
         return Response(serializer.data)
 
     # 추천 상품 관련 로직
