@@ -221,34 +221,6 @@ class ProductViewSet(viewsets.ModelViewSet):
             # 찜 추가
             wishlisted = True
 
-        # keywords = get_keywords_from_gpt_or_cache(product.name, product.category.name)
-
-        # if created:
-        #     # 찜 추가 시 -> 점수 +1
-        #     for kw in keywords:
-        #         rk, _ = RecommendedKeyword.objects.get_or_create(
-        #             consumer=request.user,
-        #             keyword=kw,
-        #             defaults={"score": 0}
-        #         )
-        #         rk.score += 1
-        #         rk.save(update_fields=["score", "updated_at"])
-        #     wishlisted = True
-        # else:
-        #     # 찜 삭제 시 -> 점수 -1 (최소 0)
-        #     for kw in keywords:
-        #         try:
-        #             rk = RecommendedKeyword.objects.get(
-        #                 consumer=request.user,
-        #                 keyword=kw
-        #             )
-        #             rk.score = max(0, rk.score - 1)
-        #             rk.save(update_fields=["score", "updated_at"])
-        #         except RecommendedKeyword.DoesNotExist:
-        #             pass
-        #     wl.delete()
-        #     wishlisted = False
-        
         return Response(
             {"product_id": product.id, "wishlisted": wishlisted},
             status=status.HTTP_200_OK
