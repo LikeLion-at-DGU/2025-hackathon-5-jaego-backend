@@ -1,6 +1,4 @@
-from datetime import timedelta, timezone
 from django.db import models
-from django.forms import ValidationError
 
 class Reservation(models.Model):
     STATUS_CHOICES = [

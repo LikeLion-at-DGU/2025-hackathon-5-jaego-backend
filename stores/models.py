@@ -1,5 +1,4 @@
 from django.db import models
-from accounts.models import User
 
 # Create your models here.
 # 상점 (판매자 1:1 관계)

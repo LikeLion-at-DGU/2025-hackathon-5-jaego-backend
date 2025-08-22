@@ -46,33 +46,3 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"[{self.id}] {self.email} ({self.role})"
 
 ################################################################
-# ( 3 ) 추천 키워드 ( consumer 전용 )
-class RecommendedKeyword(models.Model):
-    consumer = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        limit_choices_to={'role' : 'consumer'},
-        related_name='recommended_keywords'
-    )
-    keyword = models.CharField(max_length=100)
-    score = models.FloatField()
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = ('consumer', 'keyword')  # 같은 키워드 중복 방지
-
-    def __str__(self):
-        return f"[{self.id}] {self.consumer.name} - {self.keyword} ({self.score})"
-
-# 키워드 추출 결과 저장
-class KeywordCache(models.Model):
-    product_name = models.CharField(max_length=100)
-    category_name = models.CharField(max_length=100)
-    keywords = models.JSONField()  # GPT 결과 (리스트 형태 저장)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('product_name', 'category_name')
-
-    def __str__(self):
-        return f"{self.product_name} ({self.category_name})"
