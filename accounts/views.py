@@ -1,27 +1,36 @@
-from rest_framework import viewsets, status, permissions
-from rest_framework.views import APIView
+#############################################################
+### (0) import
+# Django REST Framework 관련
+from rest_framework import viewsets, status, permissions   
+from rest_framework.views import APIView                 
+from rest_framework.decorators import action             
+from rest_framework.response import Response             
+from rest_framework.permissions import AllowAny, IsAuthenticated  
 
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+# JWT 인증 관련
+from rest_framework_simplejwt.tokens import RefreshToken       
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken 
 
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+# Swagger / 문서화
+from drf_yasg.utils import swagger_auto_schema   
 
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
+# Django 기본 인증 및 사용자 모델
+from django.contrib.auth import authenticate     
+from django.contrib.auth import get_user_model    
 
-from django.contrib.auth import authenticate
-from django.contrib.auth import get_user_model
+# 앱 내 serializer & model
+from .serializers import *                       
+from .models import RecommendedKeyword          
+from products.serializers import ProductReadSerializer 
 
-from .serializers import *
+# 앱 내 커스텀 권한
+from accounts.permissions import IsConsumer     
 
-from .services.recommend import extract_keywords
-from .models import RecommendedKeyword
-from products.models import Product
-from products.serializers import ProductReadSerializer
-from django.db.models import Q
-from accounts.permissions import IsConsumer
+# 추천 알고리즘 서비스
+from accounts.services.reco import recommend_for_user  
+
+###############################################################
+### (1) Consumer
 
 User = get_user_model()
 
@@ -77,84 +86,87 @@ class ConsumerViewSet(viewsets.GenericViewSet):
             return Response({"detail": "소비자만 접근 가능합니다."}, status=status.HTTP_403_FORBIDDEN)
         serializer = ConsumerSerializer(user)
         return Response(serializer.data)
+    
+    # 추천 상품 조회
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated, IsConsumer])
+    def recommends(self, request):
+        user = request.user
+        products = recommend_for_user(user, limit=20)
+        
+        serializer = ProductReadSerializer(products, many=True, context={"request": request})
+        return Response(serializer.data)
 
     # 추천 상품 관련 로직
-    @action(detail=False, methods=['post'])
-    def generate_keywords(self, request):# 상품명 + 카테고리 전달 -> 키워드 생성
-        product_name = request.data.get("product_name")
-        category_name = request.data.get("category_name")
+    # @action(detail=False, methods=['post'])
+    # def generate_keywords(self, request):# 상품명 + 카테고리 전달 -> 키워드 생성
+    #     product_name = request.data.get("product_name")
+    #     category_name = request.data.get("category_name")
 
-        if not product_name or not category_name:
-            return Response({"detail": "상품명과 카테고리는 필수입니다."}, status=400)
+    #     if not product_name or not category_name:
+    #         return Response({"detail": "상품명과 카테고리는 필수입니다."}, status=400)
 
-        keywords = extract_keywords(product_name, category_name)
+    #     keywords = extract_keywords(product_name, category_name)
 
-        # DB 저장 (소비자 전용)
-        consumer = request.user
-        if consumer.role != "consumer":
-            return Response({"detail": "소비자만 접근 가능합니다."}, status=403)
+    #     # DB 저장 (소비자 전용)
+    #     consumer = request.user
+    #     if consumer.role != "consumer":
+    #         return Response({"detail": "소비자만 접근 가능합니다."}, status=403)
 
-        saved_keywords = []
-        for kw in keywords:
-            obj, _ = RecommendedKeyword.objects.update_or_create(
-                consumer=consumer, keyword=kw,
-                defaults={"score": 1.0},
-            )
-            saved_keywords.append(obj.keyword)
+    #     saved_keywords = []
+    #     for kw in keywords:
+    #         obj, _ = RecommendedKeyword.objects.update_or_create(
+    #             consumer=consumer, keyword=kw,
+    #             defaults={"score": 1.0},
+    #         )
+    #         saved_keywords.append(obj.keyword)
 
-        return Response({"keywords": saved_keywords}, status=200)
+    #     return Response({"keywords": saved_keywords}, status=200)
 
-class RecommendView(APIView):
-    permission_classes = [IsAuthenticated, IsConsumer]
+####################################################################
+### (1-2) 추천 키워드
+# class RecommendView(APIView):
+#     permission_classes = [IsAuthenticated, IsConsumer]
 
-    @swagger_auto_schema(
-        operation_summary="추천 키워드 기반 상품 조회",
-        operation_description="소비자 전용. 상위 3개 추천 키워드로 상품 검색 후 반환합니다.",
-        responses={
-            200: openapi.Response(
-                description="추천 상품 리스트",
-                schema=ProductReadSerializer(many=True)
-            ),
-            403: "소비자가 아닌 경우 접근 불가",
-            401: "인증 필요"
-        }
-    )
+#     @swagger_auto_schema(
+#         operation_summary="추천 키워드 기반 상품 조회",
+#         operation_description="소비자 전용. 찜한 상품과 추천 키워드를 기반으로 상품 추천",
+#         responses={200: ProductReadSerializer(many=True)}
+#     )
     
     
-    def get(self, request):
-        user = request.user
-
+#     def get(self, request):
+#         user = request.user
+        
         # 상위 3개 키워드
-        top_keywords = (
-            RecommendedKeyword.objects
-            .filter(consumer=user, score__gt=0)
-            .order_by("-score")[:3]
-        )
-        keyword_list = [rk.keyword for rk in top_keywords]
+        #top_keywords = (
+        #    RecommendedKeyword.objects
+        #    .filter(consumer=user, score__gt=0)
+        #    .order_by("-score")[:3]
+        #)
+        #keyword_list = [rk.keyword for rk in top_keywords]
 
-        if not keyword_list:
-            return Response(
-                {"detail": "추천할 키워드가 없습니다. 찜을 먼저 해주세요."},
-                status=200
-            )
+        #if not keyword_list:
+        #    return Response(
+        #        {"detail": "추천할 키워드가 없습니다. 찜을 먼저 해주세요."},
+        #        status=200
+        #    )
 
         # 상품명 + 카테고리명에서만 검색
-        query = Q()
-        for kw in keyword_list:
-            query |= Q(name__icontains=kw)
-            query |= Q(category__name__icontains=kw)
+        #query = Q()
+        #for kw in keyword_list:
+        ##    query |= Q(category__name__icontains=kw)
 
-        queryset = (
-            Product.objects
-            .select_related("store", "category")
-            .filter(is_active=True, store__is_open=True)
-            .filter(query)
-            .distinct()
-            .order_by("-id")
-        )
+        #queryset = (
+        #    Product.objects
+        #    .select_related("store", "category")
+        #    .filter(is_active=True, store__is_open=True)
+        #    .filter(query)
+        #    .distinct()
+        #    .order_by("-id")
+        #)
 
-        serializer = ProductReadSerializer(queryset, many=True, context={"request": request})
-        return Response(serializer.data, status=200)
+        #serializer = ProductReadSerializer(queryset, many=True, context={"request": request})
+        #return Response(serializer.data, status=200)
 
 ########################################################
 # (2) Seller

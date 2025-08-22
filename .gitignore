@@ -178,6 +178,9 @@ celery.pid
 celerybeat-schedule
 celerybeat-schedule-*
 
+# 임베딩 관련
+.npy
+embeddings/*.npy
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
