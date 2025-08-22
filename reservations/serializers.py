@@ -6,7 +6,8 @@ class ReservationReadSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True) 
     consumer = serializers.SerializerMethodField()
     cancel_reason = serializers.SerializerMethodField()
-    
+    store = serializers.SerializerMethodField()
+
     reserved_at = serializers.DateTimeField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     status = serializers.CharField(read_only=True)
@@ -27,6 +28,15 @@ class ReservationReadSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'cancel_reason'):
             return obj.cancel_reason.reason
         return None
+
+    def get_store(self, obj):                 
+        store = obj.product.store
+        return {
+            "id": store.id,
+            "name": getattr(store, "name", ""),
+            "lat": getattr(store, "latitude", None),
+            "lng": getattr(store, "longitude", None),
+        }
 
 class ReservationCreateSerializer(serializers.ModelSerializer):
     consumer = serializers.SerializerMethodField()
