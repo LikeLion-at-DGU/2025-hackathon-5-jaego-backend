@@ -12,7 +12,7 @@ class ProductReadSerializer(serializers.ModelSerializer):
         store = obj.store
         return {
             "id": store.id,
-            "name": getattr(store, "name", ""),
+            "name": getattr(store, "store_name", ""),
             "lat": getattr(store, "latitude", None),
             "lng": getattr(store, "longitude", None),
         }
