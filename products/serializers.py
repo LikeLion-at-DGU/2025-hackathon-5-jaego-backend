@@ -4,17 +4,16 @@ from .models import Product
 from stores.models import Store
 
 class ProductReadSerializer(serializers.ModelSerializer):
-    store_name = serializers.CharField(source="store.name", read_only=True)
+    store_name = serializers.CharField(source="store.store_name", read_only=True)
     category_name = serializers.CharField(source="category.name", read_only=True)
     store = serializers.SerializerMethodField()
 
     def get_store(self, obj):                 
         store = obj.store
         return {
-            "id": store.id,
-            "name": getattr(store, "store_name", ""),
-            "lat": getattr(store, "latitude", None),
-            "lng": getattr(store, "longitude", None),
+            "id": obj.store.id,
+            "lat": obj.store.latitude,
+            "lng": obj.store.longitude,
         }
 
     class Meta:
@@ -43,7 +42,7 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
             "expiration_date",
             "is_active",
         ]
-        extra_kwargs = { # 필수 아님
+        extra_kwargs = {
             "description": {"required": False, "allow_null": True, "allow_blank": True}
         }
 
@@ -56,7 +55,6 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
         if price is not None and price <= 0:
             raise serializers.ValidationError({"price": "원 가격은 0보다 커야 함."})
 
-        # 생성/수정 분기
         if self.instance is None:
             # Create
             if stock is None or stock < 1:
