@@ -144,11 +144,6 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         queryset = queryset.order_by("-id")
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = ProductReadSerializer(page, many=True, context={"request": request})
-            return self.get_paginated_response(serializer.data)
-
         serializer = ProductReadSerializer(queryset, many=True, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -190,11 +185,6 @@ class ProductViewSet(viewsets.ModelViewSet):
             )
             .order_by("-id")
         )
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = ProductReadSerializer(page, many=True, context={"request": request})
-            return self.get_paginated_response(serializer.data)
 
         serializer = ProductReadSerializer(queryset, many=True, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
