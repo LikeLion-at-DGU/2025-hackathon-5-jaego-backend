@@ -5,8 +5,10 @@ from .models import Reservation, Notification, ReservationCancelReason
 class ReservationReadSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True) 
     consumer = serializers.SerializerMethodField()
-    cancel_reason = serializers.SerializerMethodField()
     store = serializers.SerializerMethodField()
+    product = serializers.SerializerMethodField()
+    
+    cancel_reason = serializers.SerializerMethodField()
 
     reserved_at = serializers.DateTimeField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
@@ -33,9 +35,16 @@ class ReservationReadSerializer(serializers.ModelSerializer):
         store = obj.product.store
         return {
             "id": store.id,
-            "name": getattr(store, "name", ""),
+            "name": getattr(store, "store_name", ""),
             "lat": getattr(store, "latitude", None),
             "lng": getattr(store, "longitude", None),
+        }
+    
+    def get_product(self, obj):
+        product = obj.product
+        return {
+            "id": product.id,
+            "name" : getattr(product, "name", ""),
         }
 
 class ReservationCreateSerializer(serializers.ModelSerializer):
