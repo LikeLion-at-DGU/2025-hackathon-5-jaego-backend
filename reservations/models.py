@@ -19,7 +19,7 @@ class Reservation(models.Model):
     reserved_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"[{self.id}] {self.consumer.email} - {self.product.name} ({self.status})"
+        return f"[{self.id}] {self.consumer.email} - {self.product.name} ({self.status}) / 가게명 : {self.product.store.store_name}"
 
 class ReservationCancelReason(models.Model):
     reservation = models.OneToOneField(

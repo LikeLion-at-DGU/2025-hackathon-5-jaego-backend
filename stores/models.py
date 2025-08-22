@@ -22,4 +22,4 @@ class Store(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"[{self.id}] {self.store_name} - ({self.seller.name})"
+        return f"[{self.id}] {self.store_name} - ({self.seller.name}/{self.seller.email})"
