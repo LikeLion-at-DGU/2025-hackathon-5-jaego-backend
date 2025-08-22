@@ -47,6 +47,7 @@ class ReservationReadSerializer(serializers.ModelSerializer):
             "name" : getattr(product, "name", ""),
         }
 
+###########################################################
 class ReservationCreateSerializer(serializers.ModelSerializer):
     consumer = serializers.SerializerMethodField()
     reserved_at = serializers.DateTimeField(read_only=True)
