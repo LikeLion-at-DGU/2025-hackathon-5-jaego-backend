@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from datetime import timedelta
+from celery.schedules import crontab
 from pathlib import Path
 
 import os
@@ -189,6 +190,10 @@ CELERY_BEAT_SCHEDULE = {
     'deactivate-expired-products-every-30-sec': {
         'task': 'products.tasks.deactivate_expired_products',
         'schedule': 30.0,
+    },
+    'daily-refresh': {
+        'task': 'products.tasks.daily_embedding_refresh',
+        'schedule': crontab(hour=[3, 15], minute=0),  # 매일 새벽 3시에 전체 갱신
     },
 }
 
