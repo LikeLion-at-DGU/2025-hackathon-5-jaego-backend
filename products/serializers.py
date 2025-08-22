@@ -20,7 +20,8 @@ class ProductReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            "id", "store", "category", "category_name",
+            "id", "store", "store_name",
+            "category", "category_name",
             "image", "name", "description",
             "price", "discount_price", "discount_rate",
             "stock", "expiration_date", "is_active",
