@@ -6,11 +6,21 @@ from stores.models import Store
 class ProductReadSerializer(serializers.ModelSerializer):
     store_name = serializers.CharField(source="store.name", read_only=True)
     category_name = serializers.CharField(source="category.name", read_only=True)
+    store = serializers.SerializerMethodField()
+
+    def get_store(self, obj):                 
+        store = obj.store
+        return {
+            "id": store.id,
+            "name": getattr(store, "name", ""),
+            "lat": getattr(store, "latitude", None),
+            "lng": getattr(store, "longitude", None),
+        }
 
     class Meta:
         model = Product
         fields = [
-            "id", "store", "store_name", "category", "category_name",
+            "id", "store", "category", "category_name",
             "image", "name", "description",
             "price", "discount_price", "discount_rate",
             "stock", "expiration_date", "is_active",
