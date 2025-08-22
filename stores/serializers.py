@@ -6,12 +6,20 @@ from accounts.models import User
 ####################################################################
 #( 상점 정보 불러오기 )
 class StoreSerializer(serializers.ModelSerializer):
-    seller_id = serializers.IntegerField(source="seller.id", read_only=True)
+    seller = serializers.SerializerMethodField()
 
+    def get_seller(self, obj):
+        user = obj.seller
+        return {
+            'id': user.id,
+            'email': user.email,
+            'phone': getattr(user, 'phone', '')
+        }
+    
     class Meta:
         model = Store
         fields = [
-            "id", "seller_id", "store_name", "opening_time",
+            "id", "seller", "store_name", "opening_time",
             "address", "latitude", "longitude",
             "is_open", "created_at", "updated_at"
         ]
