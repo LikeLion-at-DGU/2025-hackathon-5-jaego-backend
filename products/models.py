@@ -17,7 +17,7 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"[{self.id}] {self.name} ({self.is_active})"
+        return f"[{self.id}] {self.name} ({self.is_active}) / 가게명 : {self.store.store_name}"
 
 
 class Wishlist(models.Model):
