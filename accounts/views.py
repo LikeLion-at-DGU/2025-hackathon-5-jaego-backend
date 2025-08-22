@@ -19,8 +19,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model    
 
 # 앱 내 serializer & model
-from .serializers import *                       
-from .models import RecommendedKeyword          
+from .serializers import *                     
 from products.serializers import ProductReadSerializer 
 
 # 앱 내 커스텀 권한
@@ -98,79 +97,7 @@ class ConsumerViewSet(viewsets.GenericViewSet):
         
         serializer = ProductReadSerializer(products_sorted, many=True, context={"request": request})
         return Response(serializer.data)
-
-    # 추천 상품 관련 로직
-    # @action(detail=False, methods=['post'])
-    # def generate_keywords(self, request):# 상품명 + 카테고리 전달 -> 키워드 생성
-    #     product_name = request.data.get("product_name")
-    #     category_name = request.data.get("category_name")
-
-    #     if not product_name or not category_name:
-    #         return Response({"detail": "상품명과 카테고리는 필수입니다."}, status=400)
-
-    #     keywords = extract_keywords(product_name, category_name)
-
-    #     # DB 저장 (소비자 전용)
-    #     consumer = request.user
-    #     if consumer.role != "consumer":
-    #         return Response({"detail": "소비자만 접근 가능합니다."}, status=403)
-
-    #     saved_keywords = []
-    #     for kw in keywords:
-    #         obj, _ = RecommendedKeyword.objects.update_or_create(
-    #             consumer=consumer, keyword=kw,
-    #             defaults={"score": 1.0},
-    #         )
-    #         saved_keywords.append(obj.keyword)
-
-    #     return Response({"keywords": saved_keywords}, status=200)
-
-####################################################################
-### (1-2) 추천 키워드
-# class RecommendView(APIView):
-#     permission_classes = [IsAuthenticated, IsConsumer]
-
-#     @swagger_auto_schema(
-#         operation_summary="추천 키워드 기반 상품 조회",
-#         operation_description="소비자 전용. 찜한 상품과 추천 키워드를 기반으로 상품 추천",
-#         responses={200: ProductReadSerializer(many=True)}
-#     )
     
-    
-#     def get(self, request):
-#         user = request.user
-        
-        # 상위 3개 키워드
-        #top_keywords = (
-        #    RecommendedKeyword.objects
-        #    .filter(consumer=user, score__gt=0)
-        #    .order_by("-score")[:3]
-        #)
-        #keyword_list = [rk.keyword for rk in top_keywords]
-
-        #if not keyword_list:
-        #    return Response(
-        #        {"detail": "추천할 키워드가 없습니다. 찜을 먼저 해주세요."},
-        #        status=200
-        #    )
-
-        # 상품명 + 카테고리명에서만 검색
-        #query = Q()
-        #for kw in keyword_list:
-        ##    query |= Q(category__name__icontains=kw)
-
-        #queryset = (
-        #    Product.objects
-        #    .select_related("store", "category")
-        #    .filter(is_active=True, store__is_open=True)
-        #    .filter(query)
-        #    .distinct()
-        #    .order_by("-id")
-        #)
-
-        #serializer = ProductReadSerializer(queryset, many=True, context={"request": request})
-        #return Response(serializer.data, status=200)
-
 ########################################################
 # (2) Seller
 class SellerViewSet(viewsets.GenericViewSet):
