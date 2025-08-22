@@ -40,7 +40,7 @@ def user_vector_from_likes(user):
 def recommend_for_user(user, limit=20, user_top_keywords=None):
     u = user_vector_from_likes(user)
     if not np.any(u):
-        return Product.objects.filter(is_active=True, stock__gt=0).order_by("-created_at")[:limit]
+        return Product.objects.none()
 
     sims = ITEM_VECS @ u if ITEM_VECS.size else np.array([])  # ITEM_VECS 없으면 빈 배열
     
