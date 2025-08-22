@@ -11,8 +11,6 @@ from math import radians, cos, sin, asin, sqrt
 from accounts.permissions import IsSeller, IsConsumer
 from stores.models import Store
 from .models import Product, Wishlist
-from accounts.models import RecommendedKeyword
-from accounts.services.recommend import get_keywords_from_gpt_or_cache
 from .serializers import ProductReadSerializer, ProductCreateUpdateSerializer
 
 
@@ -83,36 +81,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # 소비자 위시리스트
-    @action(
-        detail=True,
-        methods=["post"],
-        url_path="wishlist",
-        permission_classes=[IsAuthenticated, IsConsumer],  # 소비자만
-    )
-
-    # 소비자 위시리스트 목록 조회
-    @action(
-        detail=False,
-        methods=["get"],
-        url_path="wishlist",
-        permission_classes=[IsAuthenticated, IsConsumer],
-    )
-    def my_wishlist(self, request):
-        product_qs = (
-            Product.objects
-            .select_related("store", "category")
-            .filter(wishlisted_by__consumer=request.user)
-            .order_by("-id")
-        )
-
-        page = self.paginate_queryset(product_qs)
-        if page is not None:
-            serializer = ProductReadSerializer(page, many=True, context={"request": request})
-            return self.get_paginated_response(serializer.data)
-
-        serializer = ProductReadSerializer(product_qs, many=True, context={"request": request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     # 근처 가게 상품 목록 조회 (소비자 전용)
     @action(
@@ -226,7 +194,8 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = ProductReadSerializer(queryset, many=True, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    #찜 + 추천 키워드
+    ####################################################33
+    #찜 추가/ 삭제 (toggle)
     @action(
         detail=True,
         methods=["post"],
@@ -243,37 +212,70 @@ class ProductViewSet(viewsets.ModelViewSet):
             consumer=request.user,
             product=product,
         )
-
-        keywords = get_keywords_from_gpt_or_cache(product.name, product.category.name)
-
-        if created:
-            # 찜 추가 시 -> 점수 +1
-            for kw in keywords:
-                rk, _ = RecommendedKeyword.objects.get_or_create(
-                    consumer=request.user,
-                    keyword=kw,
-                    defaults={"score": 0}
-                )
-                rk.score += 1
-                rk.save(update_fields=["score", "updated_at"])
-            wishlisted = True
-        else:
-            # 찜 삭제 시 -> 점수 -1 (최소 0)
-            for kw in keywords:
-                try:
-                    rk = RecommendedKeyword.objects.get(
-                        consumer=request.user,
-                        keyword=kw
-                    )
-                    rk.score = max(0, rk.score - 1)
-                    rk.save(update_fields=["score", "updated_at"])
-                except RecommendedKeyword.DoesNotExist:
-                    pass
+        
+        if not created:
+            # 찜 삭제
             wl.delete()
             wishlisted = False
+        else:
+            # 찜 추가
+            wishlisted = True
 
+        # keywords = get_keywords_from_gpt_or_cache(product.name, product.category.name)
+
+        # if created:
+        #     # 찜 추가 시 -> 점수 +1
+        #     for kw in keywords:
+        #         rk, _ = RecommendedKeyword.objects.get_or_create(
+        #             consumer=request.user,
+        #             keyword=kw,
+        #             defaults={"score": 0}
+        #         )
+        #         rk.score += 1
+        #         rk.save(update_fields=["score", "updated_at"])
+        #     wishlisted = True
+        # else:
+        #     # 찜 삭제 시 -> 점수 -1 (최소 0)
+        #     for kw in keywords:
+        #         try:
+        #             rk = RecommendedKeyword.objects.get(
+        #                 consumer=request.user,
+        #                 keyword=kw
+        #             )
+        #             rk.score = max(0, rk.score - 1)
+        #             rk.save(update_fields=["score", "updated_at"])
+        #         except RecommendedKeyword.DoesNotExist:
+        #             pass
+        #     wl.delete()
+        #     wishlisted = False
+        
         return Response(
             {"product_id": product.id, "wishlisted": wishlisted},
             status=status.HTTP_200_OK
         )
+    
+    #########################################
+
+    # 소비자 위시리스트 목록 조회
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="wishlist",
+        permission_classes=[IsAuthenticated, IsConsumer],
+    )
+    def my_wishlist(self, request):
+        product_qs = (
+            Product.objects
+            .select_related("store", "category")
+            .filter(wishlisted_by__consumer=request.user)
+            .order_by("-id")
+        )
+
+        page = self.paginate_queryset(product_qs)
+        if page is not None:
+            serializer = ProductReadSerializer(page, many=True, context={"request": request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = ProductReadSerializer(product_qs, many=True, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
