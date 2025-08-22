@@ -106,7 +106,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         # 필터
         search = request.query_params.get("search", "").strip()  
-        category_id = request.query_param.get("category")
+        category_id = request.query_params.get("category")
         
         # 오픈 상태인 가게만 필터링
         stores = Store.objects.filter(is_open=True)
