@@ -194,7 +194,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'daily-refresh': {
         'task': 'products.tasks.daily_embedding_refresh',
-        'schedule': crontab(hour='0, 6, 12, 18', minute=0),  # 매일 새벽 3시에 전체 갱신
+        'schedule': crontab(hour='0, 6, 12, 18', minute=0), 
     },
 }
 
