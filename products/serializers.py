@@ -40,7 +40,6 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
             "discount_price",
             "stock",
             "expiration_date",
-            "is_active",
         ]
         extra_kwargs = {
             "description": {"required": False, "allow_null": True, "allow_blank": True}
@@ -95,6 +94,7 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
         request = self.context["request"]
         store = self._get_sellers_store(request.user)
         validated_data["store"] = store
+        
         
         validated_data["discount_rate"] = self._calc_discount_rate(
         validated_data.get("price"),
