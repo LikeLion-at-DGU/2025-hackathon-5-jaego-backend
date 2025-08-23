@@ -1,4 +1,4 @@
-from django.utils import timezone
+from datetime import timedelta
 from rest_framework import serializers
 from .models import Reservation, Notification, ReservationCancelReason
 
@@ -11,18 +11,25 @@ class ReservationReadSerializer(serializers.ModelSerializer):
     
     cancel_reason = serializers.SerializerMethodField()
 
-    reserved_at = serializers.DateTimeField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
+    reserved_at = serializers.DateTimeField(read_only=True)
+    pickup_time = serializers.SerializerMethodField()
     status = serializers.CharField(read_only=True)
     class Meta:
         model = Reservation
-        fields = '__all__'
-        read_only_fields = ['status', 'created_at', 'reserved_at', 'reservation_code']
+        fields = [
+            "id", "consumer", "store", "product",
+            "cancel_reason", 
+            "reserved_at", "created_at", "pickup_time",
+            "status"
+        ]
+        read_only_fields = ['status', 'created_at', 'reserved_at']
         
     def get_consumer(self, obj):
         user = obj.consumer
         return {
             'id': user.id,
+            'name' : user.name,
             'email': user.email,
             'phone': getattr(user, 'phone', '')
         }
@@ -37,16 +44,27 @@ class ReservationReadSerializer(serializers.ModelSerializer):
         return {
             "id": store.id,
             "name": getattr(store, "store_name", ""),
+            "phone": getattr(store.seller, "phone", ""),
             "lat": getattr(store, "latitude", None),
             "lng": getattr(store, "longitude", None),
+            "address" : store.address
         }
     
     def get_product(self, obj):
         product = obj.product
         return {
             "id": product.id,
+            "quantity" : obj.quantity,
             "name" : getattr(product, "name", ""),
+            "total_price" : product.discount_price * obj.quantity,
+            "image" :obj.product.image.url if obj.product.image else None,
+            "expire_date" : product.expiration_date,
         }
+        
+    def get_pickup_time(self, obj):
+        if obj.reserved_at:
+            return obj.reserved_at + timedelta(minutes=30)
+        return None
 
 ###########################################################
 class ReservationCreateSerializer(serializers.ModelSerializer):
