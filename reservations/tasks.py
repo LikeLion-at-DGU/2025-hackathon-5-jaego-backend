@@ -34,7 +34,7 @@ def cancel_expired_reservations():
         # 취소 사유 및 상태 변경
         update_data = {
             'status': 'cancel',
-            'cancel_reason': '예약 요청이 30분 경과되어 자동 취소되었습니다.'
+            'cancel_reason': '예약 요청이 10분 경과되어 자동 취소되었습니다.'
         }
         serializer = ReservationUpdateSerializer(
             instance=reservation,
