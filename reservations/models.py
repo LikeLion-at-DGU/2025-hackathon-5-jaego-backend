@@ -32,15 +32,14 @@ class Reservation(models.Model):
     def __str__(self):
         return f"[{self.id}] {self.consumer.email} - {self.product.name} ({self.status}) / 가게명 : {self.product.store.store_name}"
     
-    def save(self, *args, **kwargs): 
-        if not self.reservation_code: 
-            # 중복 확인은 save 단계에서만 
-            while True: 
-                code = _generate_code() 
-                if not Reservation.objects.filter(reservation_code=code).exists(): 
-                    self.reservation_code = code 
-                    break 
-                super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        if not self.reservation_code:
+            while True:
+                code = _generate_code()
+                if not Reservation.objects.filter(reservation_code=code).exists():
+                    self.reservation_code = code
+                    break
+        super().save(*args, **kwargs)
 
     
 
