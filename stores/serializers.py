@@ -2,6 +2,7 @@ from rest_framework import serializers
 from decimal import Decimal, InvalidOperation
 from .models import Store
 from accounts.models import User
+from .utils.geocode import get_coords_from_address
 
 ####################################################################
 #( 상점 정보 불러오기 )
@@ -34,29 +35,10 @@ class StoreStep1Serializer(serializers.ModelSerializer):
     opening_time = serializers.CharField(max_length=50)
     address_search = serializers.CharField(max_length=200)
     address_detail = serializers.CharField(max_length=200, allow_blank=True, required=False)
-    latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
-    longitude = serializers.DecimalField(max_digits=9, decimal_places=6)
 
     class Meta:
         model = Store
-        fields = [
-            "store_name",
-            "opening_time",
-            "address_search",
-            "address_detail",
-            "latitude",
-            "longitude",
-        ]
-
-    def validate(self, attrs):
-        # 위도 경도 검증(숫자/범위)
-        lat = attrs.get("latitude")
-        lng = attrs.get("longitude")
-        if not (-90 <= lat <= 90):
-            raise serializers.ValidationError({"latitude": "위도는 -90 ~ 90 사이여야 합니다."})
-        if not (-180 <= lng <= 180):
-            raise serializers.ValidationError({"longitude": "경도는 -180 ~ 180 사이여야 합니다."})
-        return attrs
+        fields = ["store_name", "opening_time", "address_search", "address_detail"]
 
     def create(self, validated_data):
         request = self.context["request"]
@@ -67,16 +49,20 @@ class StoreStep1Serializer(serializers.ModelSerializer):
         # 주소 합치기
         base_addr = validated_data.pop("address_search")
         detail = validated_data.pop("address_detail", "")
-        address = f"{base_addr} {detail}".strip()
+        full_address = f"{base_addr} {detail}".strip()
+
+        # 구글 API로 위경도 변환
+        lat, lng = get_coords_from_address(full_address)
+        if not lat or not lng:
+            raise serializers.ValidationError({"address": "주소를 좌표로 변환할 수 없습니다."})
 
         store = Store.objects.create(
             seller=user,
             store_name=validated_data["store_name"],
             opening_time=validated_data["opening_time"],
-            address=address,
-            latitude=validated_data["latitude"],
-            longitude=validated_data["longitude"],
-            # 기본값: is_open=False,description=""
+            address=full_address,
+            latitude=Decimal(str(lat)),
+            longitude=Decimal(str(lng)),
         )
         return store
 
