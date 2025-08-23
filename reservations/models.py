@@ -30,7 +30,7 @@ class Reservation(models.Model):
     reserved_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"[{self.id}] {self.consumer.email} - {self.product.name} ({self.status}) / 가게명 : {self.product.store.store_name}"
+        return f"[{self.id} / {self.reservation_code}] {self.consumer.email} - {self.product.name} ({self.status}) / 가게명 : {self.product.store.store_name}"
     
     def save(self, *args, **kwargs):
         if not self.reservation_code:
