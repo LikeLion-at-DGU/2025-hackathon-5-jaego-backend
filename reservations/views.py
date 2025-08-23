@@ -21,7 +21,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
     ## 권한 부여
     def get_permissions(self):
         #목록 -> 로그인 상태
-        if self.action in ["list"] :
+        if self.action in ["list", "retrieve"] :
             return [IsAuthenticated()]
         
         #생성 / 목록 -> 로그인 상태

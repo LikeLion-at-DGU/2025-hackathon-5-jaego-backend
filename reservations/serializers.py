@@ -56,7 +56,8 @@ class ReservationReadSerializer(serializers.ModelSerializer):
             "quantity" : obj.quantity,
             "name" : getattr(product, "name", ""),
             "total_price" : product.discount_price * obj.quantity,
-            "image" :obj.product.image.url if obj.product.image else None
+            "image" :obj.product.image.url if obj.product.image else None,
+            "expire_date" : product.expiration_date,
         }
         
     def get_pickup_time(self, obj):
