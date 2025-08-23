@@ -73,4 +73,4 @@ class Notification(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"[{self.id}] - 예약번호 ({self.reservation.id}) / 상태 : {self.status} / ({'읽음' if self.is_read else '안읽음'})"
+        return f"[{self.id}] 예약 : {self.reservation.id} / 상태 : {self.status} / ({'읽음' if self.is_read else '안읽음'})"
