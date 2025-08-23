@@ -18,7 +18,8 @@ class ReservationReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
         fields = [
-            "id", "consumer", "store", "product",
+            "id", "reservation_code",
+            "consumer", "store", "product",
             "cancel_reason", 
             "reserved_at", "created_at", "pickup_time",
             "status"
