@@ -73,6 +73,19 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True)
     status = serializers.CharField(read_only=True)
     reservation_code = serializers.CharField(read_only=True)
+
+    def validate(self, attrs):
+        product = attrs.get("product")
+        if not product.is_active:
+            raise serializers.ValidationError({"product": "비활성화된 상품은 예약할 수 없습니다."})
+
+        if not product.store.is_open:
+            raise serializers.ValidationError({"store": "현재 영업중이지 않은 매장의 상품은 예약할 수 없습니다."})
+
+        if product.stock < attrs.get("quantity", 0):
+            raise serializers.ValidationError({"stock": "재고가 부족합니다."})
+
+        return attrs
     
     class Meta:
         model = Reservation
