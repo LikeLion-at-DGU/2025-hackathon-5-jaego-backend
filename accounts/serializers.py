@@ -64,10 +64,12 @@ class SellerSignupSerializer(serializers.ModelSerializer):
         return user
 
 class SellerSerializer(serializers.ModelSerializer):
+    store_name = serializers.CharField(source="store.store_name", read_only=True)
+    
     class Meta:
         model = User
-        fields = ('id', 'email', 'name', 'phone', 'created_at')
-        read_only_fields = ('id', 'email', 'created_at')
+        fields = ('id', 'email', 'store_name', 'name', 'phone', 'created_at')
+        read_only_fields = ('id', 'email', 'created_at', 'store_name')
         
 
 
