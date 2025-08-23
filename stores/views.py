@@ -105,48 +105,6 @@ class StoreViewSet(mixins.ListModelMixin,
     ######### (2-2) 상점 등록 2 #########
     @action(detail=False, methods=["post"], url_path="signup/step2")
     def signup_step2(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data, context={"request": request})
-        serializer.is_valid(raise_exception=True)
-        store = serializer.save()
-
-        # 각 파일이 실제로 저장되었는지 여부 확인
-        def file_info(f):
-            if not f:
-                return {"uploaded": False}
-            try:
-                url = request.build_absolute_uri(f.url)
-            except Exception:
-                url = None
-            return {"uploaded": True}
-
-        uploads = {
-            "business_license": file_info(store.business_license),
-            "permit_doc":       file_info(store.permit_doc),
-            "bank_copy":        file_info(store.bank_copy),
-        }
-
-        # 업로드 확인 메세지 출력
-        success_all = all(v["uploaded"] for v in uploads.values())
-        if success_all:
-            message = "3개 파일이 모두 업로드 됨."
-        else:
-            missing = [k for k, v in uploads.items() if not v["uploaded"]]
-            pretty = ", ".join({
-                "business_license": "사업자 등록증",
-                "permit_doc": "영업 신고증",
-                "bank_copy": "통장 사본"
-            }[k] for k in missing)
-            message = f"{pretty} 업로드가 누락됨"
-
-        return Response({
-            "message": message,
-            "uploads": uploads,
-            "store": StoreSerializer(store).data
-        }, status=status.HTTP_200_OK)
-
-    ######### (3) store/nearby/ - 주변 영업 중 상점 조회 #########
-    @action(detail=False, methods=["post"], url_path="signup/step2")
-    def signup_step2(self, request, *args, **kwargs):
         """
         상점 등록 Step2: 파일 업로드
         이미 업로드된 경우 중복 방지
@@ -202,15 +160,3 @@ class StoreViewSet(mixins.ListModelMixin,
             "uploads": uploads,
             "store": StoreSerializer(store).data
         }, status=status.HTTP_200_OK)
-
-
-    ######### (5) stores/{store_id}/products/summary/ - 상품 간략 목록 #########
-    #@action(detail=True, methods=['get'], url_path='products/summary', permission_classes=[AllowAny])
-    #def products_summary(self, request, pk=None):
-    #    from products.models import Product
-    #    from products.serializers import ProductReadSerializer
-    #    
-    #    store = get_object_or_404(Store, pk=pk)
-    #    products = Product.objects.filter(store=store, is_active=True)
-    #    serializer = ProductSummarySerializer(products, many=True)
-    #    return Response(serializer.data)
