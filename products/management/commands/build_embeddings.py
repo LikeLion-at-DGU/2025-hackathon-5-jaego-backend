@@ -16,7 +16,7 @@ def build_all_embeddings():
 
     ids, vecs = [], []
     for p in products:
-        text = f"{p.name} {getattr(p.category, 'name', '') or ''} {(p.description or '')[:120]}"
+        text = f"{p.name} {p.store.store_name} {getattr(p.category, 'name', '') or ''}"
         try:
             res = client.embeddings.create(model="text-embedding-3-small", input=text)
             vec = res.data[0].embedding
@@ -37,7 +37,7 @@ def build_embedding_for_product(product):
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
     os.makedirs(settings.EMBEDDINGS_DIR, exist_ok=True)
 
-    text = f"{product.name} {getattr(product.category, 'name', '') or ''} {(product.description or '')[:120]}"
+    text = f"{product.name} {product.store.store_name} {getattr(product.category, 'name', '') or ''}"
 
     try:
         res = client.embeddings.create(model="text-embedding-3-small", input=text)
