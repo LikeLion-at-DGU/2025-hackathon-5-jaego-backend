@@ -7,6 +7,7 @@ class ReservationReadSerializer(serializers.ModelSerializer):
     consumer = serializers.SerializerMethodField()
     store = serializers.SerializerMethodField()
     product = serializers.SerializerMethodField()
+    reservation_code = serializers.CharField(read_only=True)
     
     cancel_reason = serializers.SerializerMethodField()
 
@@ -16,7 +17,7 @@ class ReservationReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
         fields = '__all__'
-        read_only_fields = ['status', 'created_at', 'reserved_at']
+        read_only_fields = ['status', 'created_at', 'reserved_at', 'reservation_code']
         
     def get_consumer(self, obj):
         user = obj.consumer
@@ -53,6 +54,7 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
     reserved_at = serializers.DateTimeField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     status = serializers.CharField(read_only=True)
+    reservation_code = serializers.CharField(read_only=True)
     
     class Meta:
         model = Reservation
@@ -72,18 +74,14 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
         
         product = validated_data['product']
         quantity = validated_data['quantity']
-        
-        # 재고 차감 및 상품 상태 변경
+
         if product.stock < quantity:
             raise serializers.ValidationError("재고가 부족합니다.")
-        
         product.stock -= quantity
-        
         if product.stock == 0:
             product.is_active = False
         product.save()
 
-        # 예약 생성
         reservation = Reservation.objects.create(
             consumer=user,
             product=product,
