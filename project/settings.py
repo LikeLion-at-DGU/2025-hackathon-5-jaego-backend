@@ -210,20 +210,3 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Asia/Seoul"
 
 #################################################################
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-        },
-    },
-    "loggers": {
-        "accounts": {  # reco.py가 속한 앱 이름
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-    },
-}
-
