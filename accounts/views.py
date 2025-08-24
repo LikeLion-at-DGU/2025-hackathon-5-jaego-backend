@@ -1,38 +1,25 @@
-#############################################################
-### (0) import
-# Django REST Framework 관련
 from rest_framework import viewsets, status, permissions   
 from rest_framework.views import APIView                 
 from rest_framework.decorators import action             
 from rest_framework.response import Response             
 from rest_framework.permissions import AllowAny, IsAuthenticated  
 
-# JWT 인증 관련
 from rest_framework_simplejwt.tokens import RefreshToken       
-from rest_framework_simplejwt.exceptions import TokenError, InvalidToken 
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken   
 
-# Swagger / 문서화
-from drf_yasg.utils import swagger_auto_schema   
-
-# Django 기본 인증 및 사용자 모델
 from django.contrib.auth import authenticate     
 from django.contrib.auth import get_user_model    
 
-# 앱 내 serializer & model
 from .serializers import *                     
 from products.serializers import ProductReadSerializer 
 
-# 앱 내 커스텀 권한
 from accounts.permissions import IsConsumer     
 
-# 추천 알고리즘 서비스
 from accounts.services.reco import recommend_for_user  
 
-###############################################################
-### (1) Consumer
 
+# (1) 소비자
 User = get_user_model()
-
 class ConsumerViewSet(viewsets.GenericViewSet):
     serializer_class = ConsumerSerializer
     queryset = User.objects.filter(role='consumer')
@@ -98,8 +85,8 @@ class ConsumerViewSet(viewsets.GenericViewSet):
         serializer = ProductReadSerializer(products_sorted, many=True, context={"request": request})
         return Response(serializer.data)
     
-########################################################
-# (2) Seller
+
+# (2) 판매자
 class SellerViewSet(viewsets.GenericViewSet):
     serializer_class = SellerSerializer
     queryset = User.objects.filter(role='seller')
@@ -153,9 +140,8 @@ class SellerViewSet(viewsets.GenericViewSet):
         serializer = SellerSerializer(user)
         return Response(serializer.data)
 
-######################################################################
-#(3) 로그아웃 ( seller, consumer 둘 다 사용 가능 )
 
+# (3) 로그아웃 (공통)
 class LogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
