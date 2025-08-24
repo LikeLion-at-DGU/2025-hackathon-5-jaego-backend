@@ -4,8 +4,6 @@ from .models import Store
 from accounts.models import User
 from .utils.geocode import get_coords_from_address
 
-####################################################################
-#( 상점 정보 불러오기 )
 class StoreSerializer(serializers.ModelSerializer):
     seller = serializers.SerializerMethodField()
 
@@ -25,11 +23,8 @@ class StoreSerializer(serializers.ModelSerializer):
             "is_open", "created_at", "updated_at"
         ]
         read_only_fields = ["seller"]
-        
-        
 
-####################################################################
-#(상점 등록)
+
 class StoreStep1Serializer(serializers.ModelSerializer):
     store_name = serializers.CharField(max_length=100)
     opening_time = serializers.CharField(max_length=50)
@@ -44,7 +39,7 @@ class StoreStep1Serializer(serializers.ModelSerializer):
         request = self.context["request"]
         user: User = request.user
         if getattr(user, "role", None) != "seller":
-            raise serializers.ValidationError({"detail": "판매자만 매장을 등록할 수 있습니다."})
+            raise serializers.ValidationError({"detail": "판매자만 매장이 가능합니다."})
 
         # 주소 합치기
         base_addr = validated_data.pop("address_search")
@@ -88,5 +83,4 @@ class StoreStep2Serializer(serializers.ModelSerializer):
         store.save()
         return store
 
-####################################################################
 
