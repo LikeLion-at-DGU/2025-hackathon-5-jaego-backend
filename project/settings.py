@@ -194,7 +194,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'daily-refresh': {
         'task': 'products.tasks.daily_embedding_refresh',
-        'schedule': crontab(hour='0, 6, 12, 18', minute=0), 
+        'schedule': 60.0, 
     },
 }
 
