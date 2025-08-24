@@ -90,7 +90,23 @@ class ConsumerViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated, IsConsumer])
     def recommends(self, request):
         user = request.user
-        products = recommend_for_user(user, limit=20)
+        
+        lat = request.query_params.get("lat", None)
+        lng = request.query_params.get("lng", None)
+        try:
+            lat = float(lat) if lat is not None else None
+            lng = float(lng) if lng is not None else None
+        except ValueError:
+            lat = lng = None
+        
+        # 추천 함수 호출
+        products = recommend_for_user(
+            user,
+            limit=10,
+            user_lat=lat,
+            user_lng=lng,
+            max_distance_km=5.0
+        )
         
         # id 기준 내림차순 정렬 (최신 순)
         products_sorted = sorted(products, key=lambda x: x.id, reverse=True)
@@ -155,7 +171,6 @@ class SellerViewSet(viewsets.GenericViewSet):
 
 ######################################################################
 #(3) 로그아웃 ( seller, consumer 둘 다 사용 가능 )
-
 class LogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
