@@ -1,4 +1,3 @@
-import logging
 import numpy as np
 from products.models import Product
 from django.conf import settings
@@ -56,12 +55,12 @@ def haversine(lat1, lng1, lat2, lng2):
 def recommend_for_user(
     user,
     limit=10,
-    sim_threshold=0.5,
+    sim_threshold=1.0,
     user_lat=None,
     user_lng=None,
     max_distance_km=5.0,
     store_weight=0.1,
-    category_weight=0.5,
+    category_weight=0.3,
     distance_weight=0.3
     ):
     
@@ -115,20 +114,6 @@ def recommend_for_user(
     # 최종 점수
     score = sims + bonus
     
-    # 로그
-    for i, pid in enumerate(candidate_ids):
-        store_bonus = store_weight if candidates_map[pid].store_id in liked_stores else 0
-        category_bonus = category_weight if candidates_map[pid].category_id in liked_cats else 0
-        distance_bonus = distance_weight * dist_score[i]
-
-        logger.info(
-            f"🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍"
-            f" [Recommend] Product {pid} | sims: {sims[i]:.3f} "
-            f"| store: {store_bonus:.3f} | category: {category_bonus:.3f} "
-            f"| distance: {distance_bonus:.3f} | total: {score[i]:.3f}"
-            f"🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍",
-            flush=True
-        )
     
     valid_idx = np.where(score >= sim_threshold)[0]
     if valid_idx.size == 0:
