@@ -14,8 +14,8 @@ from .models import Product, Wishlist
 from .serializers import ProductReadSerializer, ProductCreateUpdateSerializer
 
 
+# 두 좌표 사이 거리 계산
 def haversine(lon1, lat1, lon2, lat2):
-    # 둘 사이 거리 계산
     lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
     dlon = lon2 - lon1
     dlat = lat2 - lat1
@@ -30,17 +30,15 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductReadSerializer
     parser_classes = [JSONParser, FormParser, MultiPartParser]
 
-    # 액션 별로 상이한 권한 부여
     def get_permissions(self):
         if self.action in ["list", "retrieve", "all_products", "toggle_wishlist", "my_wishlist", "discounted_products"]:
-            permission_classes = [IsAuthenticated]  # 로그인만 하면 소비자/판매자 모두 접근 가능
+            permission_classes = [IsAuthenticated] 
         else:
-            permission_classes = [IsAuthenticated, IsSeller]  # 등록/수정/삭제는 판매자만
+            permission_classes = [IsAuthenticated, IsSeller] 
         return [perm() for perm in permission_classes]
 
     def get_queryset(self):
         if self.action == "retrieve":
-            # 상세조회는 소비자/판매자 모두 접근 가능하도록 조건 완화
             return Product.objects.select_related("store", "category").all()
 
         if IsSeller().has_permission(self.request, self):
@@ -67,17 +65,16 @@ class ProductViewSet(viewsets.ModelViewSet):
         try:
             store = Store.objects.get(seller=self.request.user)
         except Store.DoesNotExist:
-            raise ValidationError(
-                {"store": "현재 로그인한 판매자 계정으로 등록된 매장이 없습니다. 매장 가입을 먼저 완료하세요."}
+            raise ValidationError( 
+                {"store": "현재 로그인한 판매자 계정으로 등록된 매장이 없습니다. 매장을 등록해주세요."}
             )
         serializer.save(store=store)
 
     def destroy(self, request, *args, **kwargs):
-        # 판매자인데 매장이 아직 없는 경우
         if not Store.objects.filter(seller=request.user).exists():
             raise ValidationError({"store": "현재 로그인한 판매자 계정으로 등록된 매장이 없습니다."})
 
-        instance = self.get_object()  # 내 가게 상품만 매칭
+        instance = self.get_object() 
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -100,21 +97,20 @@ class ProductViewSet(viewsets.ModelViewSet):
             radius = float(radius)
         except (TypeError, ValueError):
             return Response(
-                {"error": "lat, lng, radius 파라미터를 올바르게 입력하세요."},
+                {"error": "lat, lng, radius 파라미터를 올바르게 입력해주세요."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 필터
         search = request.query_params.get("search", "").strip()  
         category_id = request.query_params.get("category")
         
-        # 오픈 상태인 가게만 필터링
+        # 오픈 상태인 가게만 
         stores = Store.objects.filter(is_open=True)
 
-        # 기본 : 모든 store id
+        # 기본: 모든 가게
         nearby_store_ids = stores.values_list("id", flat = True)
 
-        # lat/lng 있으면 반경 필터 
+        # 거리 기반 가게 리스트업
         if lat is not None and lng is not None:
             nearby_store_ids = []
             for store in stores:
@@ -122,10 +118,8 @@ class ProductViewSet(viewsets.ModelViewSet):
                     dist = haversine(lng, lat, store.longitude, store.latitude)
                     if dist <= radius:
                         nearby_store_ids.append(store.id)
-            # 범위 내 가게가 없으면 빈 queryset이 되지 않도록
             if nearby_store_ids:
                 stores = stores.filter(id__in=nearby_store_ids)
-        # lat/lng가 없으면 stores 그대로 전체 범위 사용
 
         queryset = (
             Product.objects
@@ -133,7 +127,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             .filter(is_active=True, store__in=nearby_store_ids)
         )
 
-        # 검색어: 상품명 + 가게명 둘 다 지원
+        # 검색어: 상품명 + 가게명 기반 검색
         if search:
             queryset = queryset.filter(
                 Q(name__icontains=search) | Q(store__name__icontains=search)
@@ -147,7 +141,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = ProductReadSerializer(queryset, many=True, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # 특가 상품만 조회
+    # 특가 상품(30% 이상)만 조회
     @action(
         detail=False,
         methods=["get"],
@@ -158,10 +152,10 @@ class ProductViewSet(viewsets.ModelViewSet):
         try:
             lat = float(request.query_params.get("lat"))
             lng = float(request.query_params.get("lng"))
-            radius = float(request.query_params.get("radius", 5))  # 기본 5km
+            radius = float(request.query_params.get("radius", 5)) 
         except (TypeError, ValueError):
             return Response(
-                {"error": "lat, lng, radius 파라미터를 올바르게 입력하세요."},
+                {"error": "lat, lng, radius 파라미터를 올바르게 입력해주세요."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -174,7 +168,6 @@ class ProductViewSet(viewsets.ModelViewSet):
                 if dist <= radius:
                     nearby_store_ids.append(store.id)
 
-        # 할인율 30% 초과 조건 추가
         queryset = (
             Product.objects
             .select_related("store", "category")
@@ -189,8 +182,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = ProductReadSerializer(queryset, many=True, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    ####################################################33
-    #찜 추가/ 삭제 (toggle)
+    #찜 추가/삭제
     @action(
         detail=True,
         methods=["post"],
@@ -209,11 +201,9 @@ class ProductViewSet(viewsets.ModelViewSet):
         )
         
         if not created:
-            # 찜 삭제
             wl.delete()
             wishlisted = False
         else:
-            # 찜 추가
             wishlisted = True
 
         return Response(
@@ -221,7 +211,6 @@ class ProductViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
     
-    #########################################
 
     # 소비자 위시리스트 목록 조회
     @action(

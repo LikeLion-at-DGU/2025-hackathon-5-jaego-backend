@@ -10,10 +10,6 @@ def get_coords_from_address(address: str):
     }
     resp = requests.get(url, params=params).json()
 
-    # 👇 디버깅용 출력
-    print(f"[Geocode Request] {address}")
-    print(f"[Geocode Response] {resp}")
-
     if resp.get("status") != "OK" or not resp.get("results"):
         return None, None
 

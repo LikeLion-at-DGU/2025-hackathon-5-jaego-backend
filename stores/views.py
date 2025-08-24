@@ -11,58 +11,44 @@ from django.utils.translation import gettext_lazy as _
 
 from django.shortcuts import get_object_or_404
 
-
 from .models import Store
 from .serializers import *
 
 from accounts.permissions import IsSeller,IsConsumer
 
-class StoreViewSet(mixins.ListModelMixin, 
-                mixins.RetrieveModelMixin,
-                viewsets.GenericViewSet):
+class StoreViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     queryset = Store.objects.all()
-    permission_classes = [IsAuthenticated, IsSeller, IsConsumer]
     parser_classes = [JSONParser, FormParser, MultiPartParser]
 
-    ## serializer 설정
     def get_serializer_class(self):
         if self.action == "signup_step1":
             return StoreStep1Serializer
-        
         elif self.action == "signup_step2":
             return StoreStep2Serializer
-        
         return StoreSerializer
-    
-    ## 권한 부여
+
     def get_permissions(self):
-        #조회 / 상세 / 주변 / 상품조회 / 요약
         if self.action in ["list", "retrieve","products"] :
             return [IsAuthenticated()]
-        
         elif self.action in ["nearby"] :
             return [IsAuthenticated(), IsConsumer()]
-        
-        #signup, 영업시간 체크 -> 판매자만
         return [IsAuthenticated(),IsSeller()]
 
-    ######### (0) 모든 상점 조회 (필터 포함) #########
-    #GET /stores/
+    # 모든 상점 조회
     def list(self, request, *args, **kwargs):
         qs = self.queryset
         
-        #1) is_open 필터
+        # 1) is_open 필터
         is_open = request.query_params.get("is_open")
-        if is_open in [ True ]:
-            qs = qs.filter(is_open = True)
-        elif is_open in [ False ]:
-            qs = qs.filter(is_open = False)
-            
+        if is_open == "true":
+            qs = qs.filter(is_open=True)
+        elif is_open == "false":
+            qs = qs.filter(is_open=False)
+
         serializer = self.get_serializer(qs, many =True)
         return Response(serializer.data)
 
-    ######### (1) 상점 오픈 / 마감 #########
-    # POST /stores/{store_id}/is_open/
+    # 가게 오픈/마감 처리
     @action(detail=False, methods=["patch"], url_path="is_open")
     def toggle_is_open(self, request, pk=None):
         try:
@@ -81,19 +67,19 @@ class StoreViewSet(mixins.ListModelMixin,
         }, status=status.HTTP_200_OK)
 
     
-    ######### (2-1) 상점 등록 1 #########
+    # 상점 등록 step1
     @action(detail=False, methods=["post"], url_path="signup/step1")
     def signup_step1(self, request, *args, **kwargs):
         # 1) 이미 상점 존재 여부 확인
         store = Store.objects.filter(seller=request.user).first()
         if store:
-            # 이미 존재하면 step1 다시 생성하지 않고 기존 정보 반환
+            # 존재할 경우
             return Response({
                 "detail": "이미 상점이 존재합니다.",
                 "store": StoreSerializer(store).data
             }, status=status.HTTP_200_OK)
 
-        # 2) 새로운 상점 생성
+        # 2) 없을 시, 새로운 상점 생성
         serializer = self.get_serializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         store = serializer.save(seller=request.user)
@@ -102,19 +88,15 @@ class StoreViewSet(mixins.ListModelMixin,
             "store": StoreSerializer(store).data
         }, status=status.HTTP_201_CREATED)
     
-    ######### (2-2) 상점 등록 2 #########
+    # 상점 등록 step2
     @action(detail=False, methods=["post"], url_path="signup/step2")
     def signup_step2(self, request, *args, **kwargs):
-        """
-        상점 등록 Step2: 파일 업로드
-        이미 업로드된 경우 중복 방지
-        """
         # 1) 현재 사용자의 상점 가져오기
         store = Store.objects.filter(seller=request.user).first()
         if not store:
             return Response({"detail": "Step1을 먼저 완료해야 합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2) 이미 Step2 완료 여부 확인 (모든 파일이 존재하면 완료로 간주)
+        # 2) Step2 완료 여부 확인 (모든 파일이 존재하면 완료로 간주)
         if store.business_license and store.permit_doc and store.bank_copy:
             return Response({
                 "detail": "Step2 파일이 이미 모두 업로드되어 있습니다.",

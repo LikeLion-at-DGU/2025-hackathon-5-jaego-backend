@@ -1,6 +1,5 @@
 from django.db import models
 
-# Create your models here.
 # 상점 (판매자 1:1 관계)
 class Store(models.Model):
     seller = models.OneToOneField(

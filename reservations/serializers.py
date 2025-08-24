@@ -67,7 +67,6 @@ class ReservationReadSerializer(serializers.ModelSerializer):
             return obj.reserved_at + timedelta(minutes=30)
         return None
 
-###########################################################
 class ReservationCreateSerializer(serializers.ModelSerializer):
     consumer = serializers.SerializerMethodField()
     reserved_at = serializers.DateTimeField(read_only=True)
@@ -146,7 +145,6 @@ class ReservationUpdateSerializer(serializers.ModelSerializer):
         if reservation.status == 'cancel':
             raise serializers.ValidationError("이미 취소된 예약은 상태를 변경할 수 없습니다.")
 
-        # 상태 변경 유효성 검사
         valid_transitions = {
             'pending': ['confirm', 'cancel'],
             'confirm': ['ready'], 
@@ -158,7 +156,7 @@ class ReservationUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(f"{reservation.status} → {new_status} 변경은 허용되지 않습니다.")
 
         if new_status == 'cancel' and not attrs.get('cancel_reason'):
-            raise serializers.ValidationError("예약 취소 시 취소 사유를 입력하세요.")
+            raise serializers.ValidationError("예약 취소 시 취소 사유를 선택하세요.")
         
         return attrs
 
@@ -199,7 +197,6 @@ class ReservationUpdateSerializer(serializers.ModelSerializer):
         
         return instance
 
-#########################################################
 # 알람
 class NotificationSerializer(serializers.ModelSerializer):
     reservation_id = serializers.IntegerField(source="reservation.id", read_only=True)

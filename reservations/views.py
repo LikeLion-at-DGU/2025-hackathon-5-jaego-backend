@@ -18,17 +18,12 @@ class ReservationViewSet(viewsets.ModelViewSet):
             return ReservationCreateSerializer
         return ReservationReadSerializer
     
-    ## 권한 부여
+    # 권한
     def get_permissions(self):
-        #목록 -> 로그인 상태
         if self.action in ["list", "retrieve"] :
             return [IsAuthenticated()]
-        
-        #생성 / 목록 -> 로그인 상태
         elif self.action in ["create"] :
             return [IsAuthenticated(), IsConsumer()]
-        
-        #status 변경 -> 판매자만
         return [IsAuthenticated(), IsSeller()]
 
     def get_queryset(self):
@@ -63,7 +58,6 @@ class ReservationViewSet(viewsets.ModelViewSet):
         if product_id_param:
             qs = qs.filter(product__id=product_id_param)
         
-        
         return qs
 
     def list(self, request, *args, **kwargs):
@@ -78,7 +72,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
             return False
         return True
     
-    ############# (예약 상태) ################################
+    # 예약 상태 변경 처리
     def _update_status(self, request, pk, new_status):
         reservation = self.get_object()
         if not self._check_seller_owns_reservation(reservation):
@@ -99,27 +93,26 @@ class ReservationViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     
-    #예약 수락 [PATCH reservations/{id}/confirm/]
+    #예약 수락 
     @action(detail=True, methods=['patch'])
     def confirm(self, request, pk=None):
         return self._update_status(request, pk, 'confirm')
 
-    #예약 취소 [PATCH reservations/{id}/cancel/]
+    #예약 취소 
     @action(detail=True, methods=['patch'])
     def cancel(self, request, pk=None):
         return self._update_status(request, pk, 'cancel')
 
-    #예약 픽업 [PATCH reservations/{id}/pickup/]
+    #예약 픽업 
     @action(detail=True, methods=['patch'])
     def pickup(self, request, pk=None):
         return self._update_status(request, pk, 'pickup')
     
-    #예약 준비 완료 [PATCH reservations/{id}/ready/]
+    #예약 준비 완료
     @action(detail=True, methods=['patch'])
     def ready(self, request, pk=None):
         return self._update_status(request, pk, 'ready')
 
-    ##########################################################
 
 class NotificationViewSet(viewsets.ModelViewSet):
     queryset = Notification.objects.all()
@@ -127,11 +120,11 @@ class NotificationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsConsumer]
 
     def get_queryset(self):
-        # 로그인한 사용자 본인의 reservation 알림만 보이도록
+        # 로그인한 사용자 본인의 예약 알림만 보이도록 함
         user = self.request.user
         return Notification.objects.filter(reservation__consumer=user)
     
-    ## 읽음 처리 API
+    # 읽음 처리
     @action(detail=True, methods=['patch'])
     def read(self, request, pk=None):
         notification = self.get_object()
