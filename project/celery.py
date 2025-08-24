@@ -10,3 +10,9 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 
 # Django 앱의 tasks.py 자동으로 탐지
 app.autodiscover_tasks()
+
+# stdout / stderr 리디렉션
+app.conf.update(
+    worker_redirect_stdouts=True,
+    worker_redirect_stdouts_level="INFO",
+)
