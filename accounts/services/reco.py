@@ -1,3 +1,4 @@
+from venv import logger
 import numpy as np
 from products.models import Product
 from django.conf import settings
@@ -112,6 +113,19 @@ def recommend_for_user(
     # 최종 점수
     score = sims + bonus
     
+    # 로그
+    for i, pid in enumerate(candidate_ids):
+        store_bonus = store_weight if candidates_map[pid].store_id in liked_stores else 0
+        category_bonus = category_weight if candidates_map[pid].category_id in liked_cats else 0
+        distance_bonus = distance_weight * dist_score[i]
+
+        logger.info(
+            f"🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍"
+            f" [Recommend] Product {pid} | sims: {sims[i]:.3f} "
+            f"| store: {store_bonus:.3f} | category: {category_bonus:.3f} "
+            f"| distance: {distance_bonus:.3f} | total: {score[i]:.3f}"
+            f"🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍"
+        )
     
     valid_idx = np.where(score >= sim_threshold)[0]
     if valid_idx.size == 0:
