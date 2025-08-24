@@ -4,8 +4,6 @@ from django.conf import settings
 
 EMB_DIR = settings.EMBEDDINGS_DIR
 
-logger = logging.getLogger("accounts")
-
 def load_item_vectors():
     path = EMB_DIR / "product_vectors.npy"
     if path.exists() and path.stat().st_size > 0:
