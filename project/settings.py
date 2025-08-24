@@ -194,7 +194,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'daily-refresh': {
         'task': 'products.tasks.daily_embedding_refresh',
-        'schedule': 60.0, 
+        'schedule': 3600.0, 
     },
 }
 
