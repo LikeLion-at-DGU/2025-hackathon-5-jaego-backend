@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 
-################################################################
+
 # ( 1 ) User + role -> 소비자 / 판매자 ( 이메일 중복 불허 )
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, role=None, **extra_fields):
@@ -34,7 +34,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(max_length=20, blank=True, null=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)  # admin site 접속 권한용
+    is_staff = models.BooleanField(default=False) 
     created_at = models.DateTimeField(auto_now_add=True)
 
     USERNAME_FIELD = "email"
@@ -45,4 +45,3 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"[{self.id}] {self.email} ({self.role})"
 
-################################################################

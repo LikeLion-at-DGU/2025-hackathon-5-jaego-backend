@@ -4,9 +4,8 @@ from django.contrib.auth.password_validation import validate_password
 
 User = get_user_model()
 
-####################################################
-# (1) Consumer
 
+# (1) 소비자
 class ConsumerSignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
@@ -37,8 +36,8 @@ class ConsumerSerializer(serializers.ModelSerializer):
         fields = ('id', 'email', 'name', 'phone', 'created_at')
         read_only_fields = ('id', 'email', 'created_at')
 
-####################################################
-# (2) Seller
+
+# (2) 판매자
 class SellerSignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
