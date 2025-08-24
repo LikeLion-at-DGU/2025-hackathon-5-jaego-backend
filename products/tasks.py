@@ -15,14 +15,13 @@ def deactivate_expired_products():
 
     return f"{count}개의 유통기한 지난 상품이 비활성화되었습니다."
 
-#####################################################################
+
 @shared_task
 def daily_embedding_refresh():
     global ITEM_VECS, ITEM_IDS, IDX
+    build_all_embeddings()
 
-    build_all_embeddings()  # 파일 재생성
-
-    ITEM_VECS = load_item_vectors()   # np.ndarray 새로 로드 → 그대로 대입
+    ITEM_VECS = load_item_vectors()  
     ITEM_IDS  = load_item_ids()
 
     IDX = {int(pid): i for i, pid in enumerate(ITEM_IDS)}
