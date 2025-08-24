@@ -56,13 +56,13 @@ def haversine(lat1, lng1, lat2, lng2):
 def recommend_for_user(
     user,
     limit=10,
-    sim_threshold=0.6,
+    sim_threshold=0.5,
     user_lat=None,
     user_lng=None,
     max_distance_km=5.0,
-    store_weight=0.2,
+    store_weight=0.1,
     category_weight=0.3,
-    distance_weight=0.5
+    distance_weight=0.3
     ):
     
     u = user_vector_from_likes(user)
