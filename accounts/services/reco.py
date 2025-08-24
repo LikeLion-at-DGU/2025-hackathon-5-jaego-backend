@@ -1,4 +1,4 @@
-from venv import logger
+import logging
 import numpy as np
 from products.models import Product
 from django.conf import settings
@@ -114,6 +114,7 @@ def recommend_for_user(
     score = sims + bonus
     
     # 로그
+    logger = logging.getLogger(__name__)
     for i, pid in enumerate(candidate_ids):
         store_bonus = store_weight if candidates_map[pid].store_id in liked_stores else 0
         category_bonus = category_weight if candidates_map[pid].category_id in liked_cats else 0
