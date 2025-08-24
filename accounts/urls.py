@@ -5,10 +5,10 @@ from rest_framework_simplejwt.views import ( TokenRefreshView, )
 
 from .views import *
 
+
 router = DefaultRouter()
 router.register(r'consumer', ConsumerViewSet, basename='consumer')
 router.register(r'seller', SellerViewSet, basename = 'seller')
-
 
 urlpatterns = [
     path('', include(router.urls)),
