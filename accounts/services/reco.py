@@ -56,12 +56,12 @@ def haversine(lat1, lng1, lat2, lng2):
 def recommend_for_user(
     user,
     limit=10,
-    sim_threshold=1.0,
+    sim_threshold=0.6,
     user_lat=None,
     user_lng=None,
     max_distance_km=5.0,
-    store_weight=0.3,
-    category_weight=0.5,
+    store_weight=0.2,
+    category_weight=0.3,
     distance_weight=0.5
     ):
     
