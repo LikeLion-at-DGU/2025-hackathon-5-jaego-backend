@@ -61,8 +61,8 @@ def recommend_for_user(
     user_lng=None,
     max_distance_km=5.0,
     store_weight=0.2,
-    category_weight=0.4,
-    distance_weight=0.3
+    category_weight=0.3,
+    distance_weight=0.5
     ):
     
     u = user_vector_from_likes(user)
