@@ -1,8 +1,11 @@
+import logging
 import numpy as np
 from products.models import Product
 from django.conf import settings
 
 EMB_DIR = settings.EMBEDDINGS_DIR
+
+logger = logging.getLogger("accounts")
 
 def load_item_vectors():
     path = EMB_DIR / "product_vectors.npy"
@@ -118,7 +121,7 @@ def recommend_for_user(
         category_bonus = category_weight if candidates_map[pid].category_id in liked_cats else 0
         distance_bonus = distance_weight * dist_score[i]
 
-        print(
+        logger.info(
             f"🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍🤍"
             f" [Recommend] Product {pid} | sims: {sims[i]:.3f} "
             f"| store: {store_bonus:.3f} | category: {category_bonus:.3f} "
