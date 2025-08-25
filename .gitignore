@@ -32,6 +32,7 @@ MANIFEST
 *.manifest
 *.spec
 
+/media/
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
@@ -130,6 +131,8 @@ __pypackages__/
 # Celery stuff
 celerybeat-schedule
 celerybeat.pid
+celerybeat-schedule-shm
+celerybeat-schedule-wal
 
 # SageMath parsed files
 *.sage.py
@@ -167,6 +170,17 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Celery PID file
+celery.pid
+
+# Celery Beat schedule files
+celerybeat-schedule
+celerybeat-schedule-*
+
+# 임베딩 관련
+.npy
+embeddings/*.npy
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
